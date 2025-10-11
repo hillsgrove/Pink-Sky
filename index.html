@@ -46,6 +46,7 @@
   @media(max-width:720px){ .row{flex-direction:column;align-items:stretch} button{width:100%} select{width:100%} input[type="text"]{width:100%} }
   .meta{font-size:13px;color:var(--muted);margin-top:8px}
   footer{max-width:760px;margin:20px auto 60px;color:var(--muted);text-align:center;font-size:13px}
+  footer .source{font-size:12px;opacity:.9;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -60,7 +61,6 @@
       <select id="daySelect" title="Choose day"></select>
       <button id="btnCheck">Check</button>
     </div>
-    <div class="meta">App uses Open-Meteo (no key) for sunset + cloud fields. Works in desktop/mobile browsers.</div>
 
     <div id="output" class="result" style="display:none" role="status" aria-live="polite"></div>
 
@@ -69,6 +69,11 @@
       <a id="icsLink" class="ics" download="pink-sky-reminder.ics" style="display:none" aria-hidden="false">📅 Download reminder</a>
     </div>
   </div>
+
+  <footer>
+    <div class="source">Data source: Open-Meteo (hourly cloud + sunrise/sunset)</div>
+    <div>Made with soft clouds and stubborn optimism ☁️</div>
+  </footer>
 
 <script>
 /* persistence */
@@ -130,10 +135,9 @@ async function check(lat, lon, displayName) {
 
     // derive friendly reason text for "Unlikely" and tweak "Possible" wording
     let reason = null;
-    // prefer realistic regional reasons
     if (clow !== null && clow > 50) reason = 'overcast or low clouds';
     else if (cloud !== null && cloud > 90) reason = 'overcast';
-    else if (pm2 !== null && pm2 > 35) reason = 'hazy / poor air quality';
+    else if (pm2 !== null && pm2 > 35) reason = 'hazy / reduced air quality';
     else if (chigh !== null && chigh > 60 && cloud < 90) reason = 'mostly high clouds (may mute colors)';
     else reason = 'conditions not favorable';
 
@@ -141,7 +145,6 @@ async function check(lat, lon, displayName) {
     let verdict = 'Uncertain', cls = 'meh';
     if (score >= 4) { verdict = 'Likely — vivid pink/blue afterglow'; cls='good'; }
     else if (score >= 1.5) {
-      // if thin high clouds are present, be specific
       if ( (chigh !== null && chigh >= 15 && chigh <= 85) || (cmid !== null && cmid >= 10 && cmid <= 80) ) {
         verdict = 'Possible — thin high clouds may catch the sunset';
       } else {
@@ -161,7 +164,6 @@ async function check(lat, lon, displayName) {
     if (pm2 !== null) details.push(`Air quality: ${airQualityLabel(pm2)} (${Math.round(pm2)} µg/m³)`);
 
     const best = new Date(sunsetLocal.getTime() + 10*60000);
-
     out.innerHTML = `<div><strong class="${cls}">${verdict}</strong></div>
       <div style="margin-top:8px"><small>Sunset (${dayIndex===0?'today':('+'+dayIndex+' day(s)')}): ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} / Best check: ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div>
       <div style="margin-top:8px">${details.join(' · ')}</div>
@@ -215,7 +217,5 @@ document.getElementById('btnGeo').addEventListener('click', async ()=>{
 /* prefill saved name on load */
 window.addEventListener('DOMContentLoaded', ()=>{ const saved = loadLocationFromStorage(); if(saved) document.getElementById('manual').value = saved.name; });
 </script>
-
-<footer>Made with soft clouds and stubborn optimism ☁️</footer>
 </body>
 </html>
