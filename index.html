@@ -6,10 +6,10 @@
 <title>Pink Sky Checker</title>
 <style>
   :root{
-    --page-top:#e8f4ff;       /* pale sky blue */
-    --page-bottom:#fff0f7;    /* pale pink */
+    --page-top:#e8f4ff;
+    --page-bottom:#fff0f7;
     --card:#ffffff;
-    --ink:#0b1220;            /* very dark navy for text */
+    --ink:#0b1220;
     --muted:#6b7280;
     --accent-pink:#ff6fb5;
     --accent-blue:#6b8cff;
@@ -18,77 +18,32 @@
     --shadow: 0 8px 24px rgba(11,18,32,0.08);
     --pill-bg: rgba(139,92,246,0.08);
   }
-
-  /* page */
   html,body{height:100%}
   body{
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    margin:0;
-    min-height:100%;
+    margin:0; min-height:100%;
     background: linear-gradient(180deg,var(--page-top),var(--page-bottom));
-    color:var(--ink);
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    line-height:1.45;
-    padding:28px 16px;
+    color:var(--ink); -webkit-font-smoothing:antialiased;
+    line-height:1.45; padding:28px 16px;
   }
-
-  /* card */
-  .card{
-    max-width:760px;
-    margin:12px auto;
-    padding:20px;
-    border-radius:14px;
-    background:var(--card);
-    box-shadow:var(--shadow);
-    border:1px solid var(--soft-border);
-  }
-
-  h1{
-    margin:0 0 8px;
-    font-size:22px;
-    letter-spacing:-0.01em;
-    color:var(--ink);
-  }
+  .card{max-width:760px;margin:12px auto;padding:20px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--soft-border);}
+  h1{margin:0 0 8px;font-size:22px;letter-spacing:-0.01em;color:var(--ink);}
   .lead{color:var(--muted);margin-bottom:12px}
-
   label{display:block;margin:10px 0 6px;font-weight:700;color:var(--ink)}
   input[type="text"]{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.08);outline:none;font-size:15px}
   input[type="text"]::placeholder{color:#bfc7d6}
-  button{
-    padding:10px 14px;border-radius:10px;border:0;color:white;font-weight:700;cursor:pointer;
-    background: linear-gradient(90deg,var(--accent-pink),var(--accent-purple),var(--accent-blue));
-    box-shadow: 0 6px 14px rgba(107,119,255,0.18);
-    min-width:96px;
-  }
+  button{padding:10px 14px;border-radius:10px;border:0;color:white;font-weight:700;cursor:pointer;background: linear-gradient(90deg,var(--accent-pink),var(--accent-purple),var(--accent-blue));box-shadow: 0 6px 14px rgba(107,119,255,0.18);min-width:96px;}
   .row{display:flex;gap:10px;align-items:center}
   select{padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.08);background:white;font-size:15px}
-
-  .result{
-    margin-top:14px;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(235,243,255,0.6), rgba(255,245,252,0.6));
-    border:1px solid rgba(99,102,241,0.06)
-  }
-
-  /* verdict styles — ensure high contrast text while using cloud colors */
+  .result{margin-top:14px;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(235,243,255,0.6), rgba(255,245,252,0.6));border:1px solid rgba(99,102,241,0.06)}
   .good{color:var(--accent-blue);font-weight:800}
   .meh{color:var(--accent-purple);font-weight:800}
   .bad{color:var(--accent-pink);font-weight:800}
-
   small{color:var(--muted)}
   .tips{margin-top:12px;font-size:14px;background: linear-gradient(90deg, rgba(255,239,247,0.5), rgba(235,243,255,0.5));padding:12px;border-radius:10px;border:1px solid rgba(107,119,255,0.06)}
   a.ics{display:inline-block;margin-top:10px;color:var(--ink);text-decoration:none;padding:8px 10px;border-radius:8px;background:var(--pill-bg);font-weight:700}
-
   .error{color:var(--accent-pink);font-weight:800}
-
-  /* responsive */
-  @media(max-width:720px){
-    .row{flex-direction:column;align-items:stretch}
-    button{width:100%}
-    select{width:100%}
-    input[type="text"]{width:100%}
-  }
-
-  /* small subtle touches */
+  @media(max-width:720px){ .row{flex-direction:column;align-items:stretch} button{width:100%} select{width:100%} input[type="text"]{width:100%} }
   .meta{font-size:13px;color:var(--muted);margin-top:8px}
   footer{max-width:760px;margin:20px auto 60px;color:var(--muted);text-align:center;font-size:13px}
 </style>
@@ -99,7 +54,7 @@
     <div class="lead">Quickly tells you whether a chosen day's sunset in your area has the right clouds + clear air for vivid pink/blue afterglow. Pretty colors, clear text.</div>
 
     <label for="manual">Location & Day</label>
-    <div class="row" aria-hidden="false">
+    <div class="row">
       <button id="btnGeo" aria-label="Use my location (fast)">Use my location</button>
       <input id="manual" placeholder="Or type: City, ST or lat,lon (e.g. Chevy Chase, MD or 38.9854,-77.0701)" aria-label="Location input" />
       <select id="daySelect" title="Choose day"></select>
@@ -116,7 +71,22 @@
   </div>
 
 <script>
-/* ---------- Helpers & UI populate ---------- */
+/* ---------- Persistence helpers ---------- */
+const STORAGE_KEY = 'pinksky_saved_location';
+function saveLocationToStorage(name, lat, lon){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({name, lat, lon})); } catch(e){ console.warn('storage fail', e); }
+}
+function loadLocationFromStorage(){
+  try{
+    const s = localStorage.getItem(STORAGE_KEY);
+    if(!s) return null;
+    const obj = JSON.parse(s);
+    if(obj && typeof obj.lat === 'number' && typeof obj.lon === 'number') return obj;
+  } catch(e){ console.warn('load fail', e); }
+  return null;
+}
+
+/* ---------- UI populate & helpers ---------- */
 function pad(n){return String(n).padStart(2,'0');}
 function addDays(date, n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
 function weekdayShort(d){ return d.toLocaleDateString(undefined,{weekday:'short'}); }
@@ -131,21 +101,51 @@ function buildUrls(lat, lon){ const base=(fields)=>`https://api.open-meteo.com/v
 async function tryFetchUrls(urls){ for(const u of urls){ try{ const r=await fetch(u); const j=await r.json(); if(j && j.daily && j.hourly && j.hourly.time && j.hourly.time.length){ if(j.hourly.cloudcover || j.hourly.cloudcover===0) return j; } } catch(e){ console.warn('fetch fail',e); } } return null; }
 function makeICS(dt){ function toUTCICS(d){ const pad=(n)=>String(n).padStart(2,'0'); return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'; } const start=toUTCICS(dt); const end=toUTCICS(new Date(dt.getTime()+20*60000)); const uid='pink-sky-'+Date.now()+'@local'; const summary='Pink-sky check (photos!)'; const body='Sunset + 10 minutes — check the sky for pink/blue afterglow.'; return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//pink-sky-checker//EN\nBEGIN:VEVENT\nUID:${uid}\nDTSTAMP:${start}\nDTSTART:${start}\nDTEND:${end}\nSUMMARY:${summary}\nDESCRIPTION:${body}\nEND:VEVENT\nEND:VCALENDAR`; }
 
-/* ---------- Core check logic ---------- */
-async function check(lat, lon) {
+/* ---------- Geocode & resolve logic (uses storage to avoid repeat geocoding) ---------- */
+async function fetchCoordsFromText(text) {
+  // lat,lon literal
+  const latlon = text.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+  if (latlon) return {lat: +latlon[1], lon: +latlon[2], name: `${+latlon[1].toFixed(4)},${+latlon[2].toFixed(4)}`};
+
+  // if the typed name matches saved location name, reuse stored coords
+  const saved = loadLocationFromStorage();
+  if (saved && saved.name === text) {
+    return {lat: saved.lat, lon: saved.lon, name: saved.name};
+  }
+
+  // otherwise use Nominatim geocode
+  try {
+    const q = encodeURIComponent(text);
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`;
+    const r = await fetch(url, {headers: {'Accept-Language':'en'}});
+    const j = await r.json();
+    if (j && j[0]) return {lat: +j[0].lat, lon: +j[0].lon, name: j[0].display_name};
+  } catch(e) { console.warn('geocode fail', e); }
+  return null;
+}
+
+/* ---------- Main check logic (saves successful locations) ---------- */
+async function check(lat, lon, displayName) {
   const out = document.getElementById('output'); out.style.display='block'; out.textContent='Fetching forecast...';
   try {
     const urls = buildUrls(lat, lon);
     const json = await tryFetchUrls(urls);
-    if(!json){ out.innerHTML=`<div class="error">Forecast data unavailable for that spot.</div>`; document.getElementById('tips').style.display='none'; return; }
+    if (!json) { out.innerHTML = `<div class="error">Forecast data unavailable for that spot.</div>`; document.getElementById('tips').style.display='none'; return; }
 
-    const dayIndex = parseInt(document.getElementById('daySelect').value||'0',10);
-    if(!json.daily||!json.daily.sunset||dayIndex>=json.daily.sunset.length){ out.innerHTML=`<div class="error">Forecast for that day is not available from the API. Try a nearer day.</div>`; document.getElementById('tips').style.display='none'; return; }
+    const dayIndex = parseInt(document.getElementById('daySelect').value || '0', 10);
+    if (!json.daily || !json.daily.sunset || dayIndex >= json.daily.sunset.length) {
+      out.innerHTML = `<div class="error">Forecast for that day is not available from the API. Try a nearer day.</div>`;
+      document.getElementById('tips').style.display='none';
+      return;
+    }
+
+    // Save this successful location (name may be user text or geocode display name)
+    const nameToSave = displayName || document.getElementById('manual').value.trim() || `${lat.toFixed(4)},${lon.toFixed(4)}`;
+    saveLocationToStorage(nameToSave, lat, lon);
 
     const sunsetLocal = new Date(json.daily.sunset[dayIndex]);
     const times = json.hourly.time;
     const idx = nearestIndex(times, sunsetLocal);
-
     const cloud = json.hourly.cloudcover ? json.hourly.cloudcover[idx] : null;
     const chigh = json.hourly.cloudcover_high ? json.hourly.cloudcover_high[idx] : null;
     const cmid = json.hourly.cloudcover_mid ? json.hourly.cloudcover_mid[idx] : null;
@@ -159,7 +159,7 @@ async function check(lat, lon) {
     if (cloud !== null) { if (cloud >= 10 && cloud <= 80) score += 1; else if (cloud === 0) score -= 0.8; else if (cloud > 90) score -= 1.2; }
     if (pm2 !== null) { if (pm2 <= 12) score += 1.2; else if (pm2 <= 35) score += 0.2; else score -= 1.2; }
 
-    let verdict = 'Uncertain'; let cls='meh';
+    let verdict = 'Uncertain', cls = 'meh';
     if (score >= 4) { verdict = 'Likely vivid pink/blue afterglow'; cls='good'; }
     else if (score >= 1.5) { verdict = 'Possible — keep an eye'; cls='meh'; }
     else { verdict = 'Unlikely (too overcast, smoky, or low clouds)'; cls='bad'; }
@@ -171,41 +171,81 @@ async function check(lat, lon) {
     if (clow !== null) details.push(`Low clouds: ${Math.round(clow)}%`);
     if (pm2 !== null) details.push(`PM2.5: ${Math.round(pm2)}`);
 
-    const best = new Date(sunsetLocal.getTime()+10*60000);
+    const best = new Date(sunsetLocal.getTime() + 10*60000);
     out.innerHTML = `<div><strong class="${cls}">${verdict}</strong></div>
       <div style="margin-top:8px"><small>Sunset (${dayIndex===0?'today':('+'+dayIndex+' day(s)')}): ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} / Best check: ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div>
       <div style="margin-top:8px">${details.join(' · ')}</div>
       <div style="margin-top:10px"><small>Confidence score: ${score.toFixed(2)}</small></div>`;
+
     document.getElementById('tips').style.display='block';
     document.getElementById('bestTimeLabel').textContent = best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    const ics = makeICS(best); const blob = new Blob([ics], {type:'text/calendar'}); const urlBlob = URL.createObjectURL(blob);
-    const icsLink = document.getElementById('icsLink'); icsLink.href = urlBlob; icsLink.style.display='inline-block';
-  } catch(err) { console.error(err); out.innerHTML = '<span class="error">Error fetching forecast. Check your internet and try again.</span>'; }
+    const ics = makeICS(best);
+    const blob = new Blob([ics], {type:'text/calendar'});
+    const urlBlob = URL.createObjectURL(blob);
+    const icsLink = document.getElementById('icsLink');
+    icsLink.href = urlBlob;
+    icsLink.style.display = 'inline-block';
+  } catch (err) {
+    console.error(err);
+    out.innerHTML = '<span class="error">Error fetching forecast. Check your internet and try again.</span>';
+  }
 }
 
-/* ---------- Geocode helper & UI events ---------- */
-async function fetchCoordsFromText(text) {
-  const latlon = text.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-  if (latlon) return {lat:+latlon[1], lon:+latlon[2]};
-  try { const q=encodeURIComponent(text); const url=`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`; const r=await fetch(url,{headers:{'Accept-Language':'en'}}); const j=await r.json(); if (j && j[0]) return {lat:+j[0].lat, lon:+j[0].lon, name:j[0].display_name}; } catch(e){ console.warn('geocode fail',e); }
-  return null;
+/* ---------- Events & load: reuse saved location where possible ---------- */
+async function onCheckClicked() {
+  const v = document.getElementById('manual').value.trim();
+  if (!v) return alert('Type a city or coordinates, or press "Use my location".');
+
+  // If user typed exact saved name, use stored coords (avoid re-geocoding)
+  const saved = loadLocationFromStorage();
+  const latlonRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
+  const latlon = v.match(latlonRegex);
+  if (latlon) {
+    return await check(+latlon[1], +latlon[2], `${+latlon[1].toFixed(4)},${+latlon[2].toFixed(4)}`);
+  } else if (saved && saved.name === v) {
+    return await check(saved.lat, saved.lon, saved.name);
+  } else {
+    // geocode and then check (and that will save)
+    document.getElementById('output').style.display='block';
+    document.getElementById('output').textContent='Resolving location…';
+    const coords = await fetchCoordsFromText(v);
+    if (!coords) {
+      document.getElementById('output').innerHTML = '<span class="error">Could not resolve that location. Try "Chevy Chase, MD" or "38.9854,-77.0701".</span>';
+      return;
+    }
+    // set input to nicer display name (so next time the typed value matches saved)
+    document.getElementById('manual').value = coords.name;
+    await check(coords.lat, coords.lon, coords.name);
+  }
 }
+
+document.getElementById('btnCheck').addEventListener('click', onCheckClicked);
+
 document.getElementById('btnGeo').addEventListener('click', async ()=>{
-  if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
   document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Locating…';
-  navigator.geolocation.getCurrentPosition(async (pos)=>{ const lat=pos.coords.latitude, lon=pos.coords.longitude; document.getElementById('output').textContent=`Location found: ${lat.toFixed(4)}, ${lon.toFixed(4)} — fetching forecast...`; await check(lat,lon); }, (err)=>{ alert('Location denied / failed. You can type your city or coords instead.'); console.warn(err); document.getElementById('output').style.display='none'; }, {timeout:10000});
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    // use coords as display name so it matches on reuse
+    const displayName = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+    document.getElementById('manual').value = displayName;
+    await check(lat, lon, displayName);
+  }, (err)=>{
+    alert('Location denied / failed. You can type your city or coords instead.');
+    console.warn(err);
+    document.getElementById('output').style.display='none';
+  }, {timeout:10000});
 });
-document.getElementById('btnCheck').addEventListener('click', async ()=> {
-  const v=document.getElementById('manual').value.trim();
-  if(!v) return alert('Type a city or coordinates, or press "Use my location".');
-  document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Resolving location…';
-  const coords = await fetchCoordsFromText(v);
-  if(!coords){ document.getElementById('output').innerHTML='<span class="error">Could not resolve that location. Try "Chevy Chase, MD" or "38.9854,-77.0701".</span>'; return; }
-  document.getElementById('output').textContent=`Resolved: ${coords.name||''} (${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}) — fetching forecast...`;
-  await check(coords.lat, coords.lon);
+
+/* On load: prefill input with saved name if present */
+window.addEventListener('DOMContentLoaded', ()=>{
+  const saved = loadLocationFromStorage();
+  if (saved) {
+    document.getElementById('manual').value = saved.name;
+  }
 });
-document.getElementById('manual').addEventListener('keydown',(e)=>{ if(e.key==='Enter') document.getElementById('btnCheck').click(); });
 </script>
+
 <footer>Made with soft clouds and stubborn optimism ☁️</footer>
 </body>
 </html>
