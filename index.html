@@ -11,7 +11,8 @@
   label{display:block;margin:12px 0 6px;font-weight:600}
   input[type="text"]{width:100%;padding:8px;border-radius:6px;border:1px solid #d6e0f0}
   button{padding:10px 14px;border-radius:8px;border:0;background:#0b63ff;color:white;font-weight:600;cursor:pointer}
-  .row{display:flex;gap:8px}
+  .row{display:flex;gap:8px;align-items:center}
+  select{padding:8px;border-radius:6px;border:1px solid #d6e0f0;background:white}
   .result{margin-top:14px;padding:12px;border-radius:8px;background:#fbfdff;border:1px solid #e6f0ff}
   .good{color:#0a6d2f;font-weight:700}
   .meh{color:#8a6f00;font-weight:700}
@@ -19,6 +20,8 @@
   small{color:#6b7280}
   .tips{margin-top:12px;font-size:14px;background:#f7f9ff;padding:10px;border-radius:8px}
   a.ics{display:inline-block;margin-top:10px}
+  .error{color:#7a1428;font-weight:700}
+  @media(max-width:560px){ .row{flex-direction:column;align-items:stretch} .row > *{width:100%} }
 </style>
 </head>
 <body>
@@ -26,10 +29,11 @@
     <h1>Pink Sky Checker</h1>
     <div>Quickly tells you whether tonight’s sunset in your area has the right clouds + clear air for vivid pink/blue afterglow.</div>
 
-    <label>Location</label>
+    <label>Location & Day</label>
     <div class="row">
       <button id="btnGeo">Use my location (fast)</button>
-      <input id="manual" placeholder="Or type: City, ST or lat,lon (e.g. Chevy Chase, MD or 39.0,-77.07)" />
+      <input id="manual" placeholder="Or type: City, ST or lat,lon (e.g. Chevy Chase, MD or 38.9072,-77.0369)" />
+      <select id="daySelect" title="Choose day"></select>
       <button id="btnCheck">Check</button>
     </div>
     <div style="margin-top:8px"><small>App uses Open-Meteo (no key) for sunrise/sunset + hourly cloud fields. Works in desktop/mobile browsers.</small></div>
@@ -43,23 +47,30 @@
   </div>
 
 <script>
-async function fetchCoordsFromText(text) {
-  // quick guess: if lat,lon provided
-  const latlon = text.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
-  if (latlon) return {lat: +latlon[1], lon: +latlon[2]};
-  // fallback: call free geocoding (nominatim) — respects CORS and no key
-  try {
-    const q = encodeURIComponent(text);
-    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`;
-    const r = await fetch(url, {headers: {'Accept-Language':'en'}});
-    const j = await r.json();
-    if (j && j[0]) return {lat: +j[0].lat, lon: +j[0].lon, name: j[0].display_name};
-  } catch(e) {
-    console.warn('geocode fail', e);
-  }
-  return null;
-}
+/* ---------- Helpers ---------- */
+function pad(n){return String(n).padStart(2,'0');}
+function addDays(date, n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
+function weekdayShort(d){ return d.toLocaleDateString(undefined,{weekday:'short'}); }
+function monthDay(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
 
+/* populate next 7 days in the day select using local dates (labels) */
+function populateDaySelect() {
+  const sel = document.getElementById('daySelect');
+  sel.innerHTML=''; 
+  const now = new Date();
+  for (let i=0;i<7;i++){
+    const dt = addDays(now,i);
+    const label = (i===0? 'Today' : (i===1? 'Tomorrow' : weekdayShort(dt))) + ' (' + monthDay(dt) + ')';
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = label;
+    sel.appendChild(opt);
+  }
+}
+/* initial populate */
+populateDaySelect();
+
+/* nearest hourly index helper */
 function nearestIndex(timesISO, targetDate) {
   let best = 0, bestDiff = Infinity;
   for (let i=0;i<timesISO.length;i++){
@@ -69,9 +80,32 @@ function nearestIndex(timesISO, targetDate) {
   return best;
 }
 
-// Build an .ics file for local download / calendar import
+/* build urls with fallback fields */
+function buildUrls(lat, lon) {
+  const base = (fields) => `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&hourly=${fields}&timezone=auto`;
+  return [
+    base('cloudcover,cloudcover_high,cloudcover_mid,cloudcover_low,pm2_5'),
+    base('cloudcover,pm2_5'),
+    base('cloudcover')
+  ];
+}
+async function tryFetchUrls(urls) {
+  for (const u of urls) {
+    try {
+      const r = await fetch(u);
+      const j = await r.json();
+      if (j && j.daily && j.hourly && j.hourly.time && j.hourly.time.length) {
+        if (j.hourly.cloudcover || j.hourly.cloudcover === 0) return j;
+      }
+    } catch(e) {
+      console.warn('fetch fail', e);
+    }
+  }
+  return null;
+}
+
+/* ICS maker */
 function makeICS(dt) {
-  // dt is Date for the reminder
   function toUTCICS(d){
     const pad=(n)=>String(n).padStart(2,'0');
     return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z';
@@ -95,43 +129,45 @@ END:VEVENT
 END:VCALENDAR`;
 }
 
+/* ---------- Main check logic ---------- */
 async function check(lat, lon) {
   const out = document.getElementById('output');
   out.style.display = 'block';
   out.textContent = 'Fetching forecast...';
 
-  // Request: daily sunrise/sunset and hourly cloudcover + cloudcover_high/mid/low if available.
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&hourly=cloudcover,cloudcover_high,cloudcover_mid,cloudcover_low,pm2_5&timezone=auto`;
   try {
-    const res = await fetch(url);
-    const json = await res.json();
-    if (!json || !json.daily || !json.hourly) {
-      out.innerHTML = '<span class="bad">Forecast data unavailable for that spot.</span>';
+    const urls = buildUrls(lat, lon);
+    const json = await tryFetchUrls(urls);
+
+    if (!json) {
+      out.innerHTML = `<div class="error">Forecast data unavailable for that spot.</div>`;
+      document.getElementById('tips').style.display = 'none';
       return;
     }
 
-    // today's sunrise/sunset (take first element)
-    const sunrise = new Date(json.daily.sunrise[0]);
-    const sunset  = new Date(json.daily.sunset[0]);
+    // day selection index (0 = today up to 6)
+    const dayIndex = parseInt(document.getElementById('daySelect').value || '0', 10);
 
-    // find nearest hourly index to sunset
-    const times = json.hourly.time; // ISO strings
-    const idx = nearestIndex(times.map(t=>t), sunset);
+    // Verify the API returned enough days
+    if (!json.daily || !json.daily.sunset || dayIndex >= json.daily.sunset.length) {
+      out.innerHTML = `<div class="error">Forecast for that day is not available from the API. Try a nearer day.</div>`;
+      document.getElementById('tips').style.display = 'none';
+      return;
+    }
 
-    // grab cloud fields (some APIs may omit specific fields)
+    // parse the chosen day's sunset
+    const sunsetLocal = new Date(json.daily.sunset[dayIndex]);
+    const times = json.hourly.time;
+    const idx = nearestIndex(times, sunsetLocal);
+
     const cloud = json.hourly.cloudcover ? json.hourly.cloudcover[idx] : null;
     const chigh = json.hourly.cloudcover_high ? json.hourly.cloudcover_high[idx] : null;
     const cmid = json.hourly.cloudcover_mid ? json.hourly.cloudcover_mid[idx] : null;
     const clow = json.hourly.cloudcover_low ? json.hourly.cloudcover_low[idx] : null;
     const pm2 = json.hourly.pm2_5 ? json.hourly.pm2_5[idx] : null;
 
-    // heuristics for "pink/blue" favorable conditions:
-    // - presence of mid/high thin clouds (20-80% preferred)
-    // - low clouds low (<30%) or null
-    // - overall cloud between 10-80 (not clear sky, not overcast)
-    // - pm2.5 (if available) below ~12 (US good)
+    // scoring (skip missing fields)
     let score = 0;
-    // cloud heuristics
     if (chigh !== null) {
       if (chigh >= 15 && chigh <= 85) score += 2;
       else if (chigh > 85) score -= 1;
@@ -156,35 +192,29 @@ async function check(lat, lon) {
       else score -= 1.2;
     }
 
-    // Normalize quick confidence  -> map to verdict
     let verdict = 'Uncertain';
     let cls = 'meh';
     if (score >= 4) { verdict = 'Likely vivid pink/blue afterglow'; cls='good'; }
     else if (score >= 1.5) { verdict = 'Possible — keep an eye'; cls='meh'; }
     else { verdict = 'Unlikely (too overcast, smoky, or low clouds)'; cls='bad'; }
 
-    // Build helpful display
     const details = [];
     if (cloud !== null) details.push(`Overall cloud: ${Math.round(cloud)}%`);
     if (chigh !== null) details.push(`High clouds: ${Math.round(chigh)}%`);
     if (cmid !== null) details.push(`Mid clouds: ${Math.round(cmid)}%`);
     if (clow !== null) details.push(`Low clouds: ${Math.round(clow)}%`);
-    if (pm2 !== null) details.push(`PM2.5 (µg/m³): ${Math.round(pm2)}`);
+    if (pm2 !== null) details.push(`PM2.5: ${Math.round(pm2)}`);
 
-    const sunsetLocal = new Date(json.daily.sunset[0]);
-    // best photo time suggestion: sunset + 10 minutes
     const best = new Date(sunsetLocal.getTime() + 10*60000);
 
     out.innerHTML = `<div><strong class="${cls}">${verdict}</strong></div>
-      <div style="margin-top:8px"><small>Sunset: ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} / Best check: ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div>
+      <div style="margin-top:8px"><small>Sunset (${dayIndex===0?'today':('+'+dayIndex+' day(s)')}): ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} / Best check: ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div>
       <div style="margin-top:8px">${details.join(' · ')}</div>
       <div style="margin-top:10px"><small>Confidence score: ${score.toFixed(2)}</small></div>`;
 
-    // show tips area
     document.getElementById('tips').style.display = 'block';
     document.getElementById('bestTimeLabel').textContent = best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 
-    // prepare ICS link for calendar reminder at sunset+10
     const ics = makeICS(best);
     const blob = new Blob([ics], {type:'text/calendar'});
     const urlBlob = URL.createObjectURL(blob);
@@ -194,8 +224,22 @@ async function check(lat, lon) {
 
   } catch (err) {
     console.error(err);
-    out.innerHTML = '<span class="bad">Error fetching forecast. Check your internet and try again.</span>';
+    out.innerHTML = '<span class="error">Error fetching forecast. Check your internet and try again.</span>';
   }
+}
+
+/* ---------- Geocode helper & UI events ---------- */
+async function fetchCoordsFromText(text) {
+  const latlon = text.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+  if (latlon) return {lat: +latlon[1], lon: +latlon[2]};
+  try {
+    const q = encodeURIComponent(text);
+    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`;
+    const r = await fetch(url, {headers: {'Accept-Language':'en'}});
+    const j = await r.json();
+    if (j && j[0]) return {lat: +j[0].lat, lon: +j[0].lon, name: j[0].display_name};
+  } catch(e) { console.warn('geocode fail', e); }
+  return null;
 }
 
 document.getElementById('btnGeo').addEventListener('click', async ()=>{
@@ -220,14 +264,14 @@ document.getElementById('btnCheck').addEventListener('click', async ()=> {
   document.getElementById('output').textContent='Resolving location…';
   const coords = await fetchCoordsFromText(v);
   if (!coords) {
-    document.getElementById('output').innerHTML = '<span class="bad">Could not resolve that location. Try "Chevy Chase, MD" or "39.0,-77.07".</span>';
+    document.getElementById('output').innerHTML = '<span class="error">Could not resolve that location. Try "Chevy Chase, MD" or "38.9072,-77.0369".</span>';
     return;
   }
   document.getElementById('output').textContent = `Resolved: ${coords.name || ''} (${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}) — fetching forecast...`;
   await check(coords.lat, coords.lon);
 });
 
-// allow Enter in manual box
+/* allow Enter in manual box */
 document.getElementById('manual').addEventListener('keydown', (e)=> {
   if (e.key === 'Enter') document.getElementById('btnCheck').click();
 });
