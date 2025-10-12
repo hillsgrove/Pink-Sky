@@ -5,103 +5,135 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pink Sky Checker</title>
 <style>
+  /* responsive-friendly reset */
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#071425;-webkit-font-smoothing:antialiased}
   :root{
     --bg-top:#eaf6ff;
     --bg-bottom:#fff4fb;
     --card:#ffffff;
-    --ink:#071425;
-    --muted:#6b7280;
+    --muted:#625f72;
     --low:#ff8fbf;
     --mid:#b08bff;
     --high:#6e9bff;
-    --shadow: 0 12px 34px rgba(8,18,40,0.08);
+    --shadow-lg: 0 18px 48px rgba(8,18,40,0.10);
+    --shadow-sm: 0 8px 22px rgba(8,18,40,0.06);
+    --radius:14px;
   }
-  html,body{height:100%}
+
   body{
-    margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
     background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
-    color:var(--ink); -webkit-font-smoothing:antialiased;
-    padding:30px 16px;
+    padding:clamp(18px,4.5vw,40px);
+    -webkit-tap-highlight-color:transparent;
+    line-height:1.45;
   }
 
-  /* decorative clouds (visible, behind content) */
-  .clouds{position:fixed;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:0;opacity:.22;filter: blur(8px) saturate(.98);}
-  .clouds svg{width:40%;max-width:520px;opacity:.95}
+  /* clouds (responsive) */
+  .clouds{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.22;filter: blur(6px) saturate(.96)}
+  .clouds svg{width:42vw;max-width:560px;min-width:220px}
+  .clouds .c1{position:absolute;left:-6vw;top:2vh;transform:scale(.98)}
+  .clouds .c2{position:absolute;right:-8vw;top:24vh;transform:scaleX(-1) rotate(4deg)}
+  .clouds .c3{position:absolute;left:4vw;bottom:-6vh;transform:scale(.86)}
 
-  /* title: outside card, bubble-ish 90s feel via gradient text & heavy layered shadows */
-  .title-wrap{max-width:760px;margin:0 auto 18px;position:relative;z-index:2;}
+  /* Title - scales via clamp; bubble feel using gradient text + layered shadow */
+  .title-wrap{max-width:1100px;margin:0 auto 1.2rem;position:relative;z-index:2}
   .title{
-    font-weight:900;font-size:36px;letter-spacing:-0.02em;
+    display:inline-block;
+    font-weight:900;
+    font-size:clamp(24px,5.2vw,42px);
+    line-height:1;
     color:transparent;
-    background-image: linear-gradient(90deg,var(--low),var(--mid),var(--high));
     -webkit-background-clip:text;background-clip:text;
+    background-image: linear-gradient(90deg,var(--low),var(--mid),var(--high));
     text-shadow:
-      0 3px 0 rgba(255,255,255,0.8),
-      0 6px 18px rgba(106,90,205,0.10),
-      0 12px 30px rgba(107,119,255,0.08);
-    display:inline-block;padding:6px 14px;border-radius:18px;
+      0 2px 0 rgba(255,255,255,0.8),
+      0 8px 24px rgba(107,119,255,0.09);
+    padding:6px 12px;border-radius:16px;
   }
 
-  /* card */
-  .card{max-width:760px;margin:12px auto;padding:16px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);position:relative;z-index:2}
-  .lead{color:var(--muted);margin-bottom:10px;font-size:15px}
-  label{display:block;margin:8px 0 6px;font-weight:700;color:var(--ink);font-size:14px}
+  /* card container - fluid width, limited max */
+  .card{
+    width:min(920px,96vw);
+    margin:0 auto;
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-lg);
+    padding:clamp(14px,3.2vw,22px);
+    position:relative;
+    z-index:2;
+    border:1px solid rgba(8,15,40,0.04);
+  }
 
-  input[type="text"]{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);font-size:15px}
+  .lead{color:var(--muted);font-size:clamp(13px,2.2vw,15px);margin-bottom:0.6rem}
+  label{display:block;margin:10px 0 6px;font-weight:700;color:#051026}
   .row{display:flex;gap:10px;align-items:center}
-  .btn{padding:12px;border-radius:12px;border:0;color:white;font-weight:800;cursor:pointer;background:linear-gradient(90deg,var(--low),var(--mid),var(--high));box-shadow:0 8px 22px rgba(107,119,255,0.12)}
-  select{padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:15px}
+  .row.col{flex-direction:column;align-items:stretch}
 
-  /* result area — compact & clear */
-  .result{margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(245,251,255,0.85), rgba(255,248,252,0.85));border:1px solid rgba(99,102,241,0.05);font-size:15px}
-  .score-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .score-big{font-weight:900;font-size:28px}
-  .score-pill{padding:8px 12px;border-radius:999px;color:white;font-weight:800;min-width:72px;text-align:center}
-  /* gradient for the pill will be set inline to reflect value */
-  .verdict-short{font-weight:800;margin-top:6px}
-  .tagline{color:var(--muted);font-size:13px;margin-top:6px}
+  input[type="text"]{flex:1;padding:11px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);font-size:clamp(14px,2vw,16px)}
+  select{padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:clamp(14px,2vw,16px)}
+  .btn{padding:12px 14px;border-radius:12px;border:0;color:white;font-weight:800;cursor:pointer;background:linear-gradient(90deg,var(--low),var(--mid),var(--high));box-shadow:var(--shadow-sm);min-width:88px}
+  .btn.full{width:100%}
 
-  .details{color:var(--muted);margin-top:10px;font-size:14px}
+  /* result */
+  .result{
+    margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(245,251,255,0.92), rgba(255,248,252,0.92));border:1px solid rgba(99,102,241,0.05);font-size:clamp(14px,2vw,15px)
+  }
+
+  .score-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .score-left{min-width:0}
+  .score-title{font-weight:900;font-size:clamp(16px,2.4vw,22px)}
+  .verdict{font-weight:700;margin-top:6px;color:#243046}
+  .tagline{color:var(--muted);font-size:clamp(12px,1.8vw,13px);margin-top:6px}
+  .score-block{text-align:right}
+  .score-big{font-weight:900;font-size:clamp(22px,4vw,34px);line-height:1}
+  .score-pill{display:inline-block;padding:.45rem .65rem;border-radius:999px;color:white;font-weight:800;margin-top:8px}
+
+  .details{color:var(--muted);margin-top:8px;font-size:clamp(13px,1.8vw,14px)}
   .tiny{font-size:12px;color:var(--muted);margin-top:8px}
 
-  @media(max-width:720px){
-    .row{flex-direction:column;align-items:stretch}
-    .btn{width:100%}
-    .title{font-size:30px}
-    .score-big{font-size:22px}
+  /* help text and tips below */
+  .tips{margin-top:12px;font-size:14px;background: linear-gradient(90deg, rgba(255,244,248,0.65), rgba(237,245,255,0.65));padding:12px;border-radius:10px;border:1px solid rgba(107,119,255,0.05)}
+
+  /* responsive layout changes */
+  @media (max-width:720px){
+    .row {gap:12px}
+    .row.inline {flex-direction:column}
+    .card {padding:16px}
+    .clouds{opacity:.18;filter: blur(8px)}
   }
-  footer{max-width:760px;margin:18px auto 60px;color:var(--muted);text-align:center;font-size:13px;position:relative;z-index:2}
+
+  footer{max-width:1100px;margin:20px auto 60px;color:var(--muted);text-align:center;font-size:13px;position:relative;z-index:2}
 </style>
 </head>
 <body>
 
-  <!-- visible fluffy clouds -->
+  <!-- decorative clouds -->
   <div class="clouds" aria-hidden="true">
-    <svg style="position:absolute;left:-10%;top:2%;" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="140" cy="80" rx="140" ry="44"/><ellipse cx="320" cy="70" rx="80" ry="34"/><ellipse cx="460" cy="78" rx="110" ry="40"/></g></svg>
-    <svg style="position:absolute;right:-8%;top:140px;" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="120" cy="70" rx="120" ry="40"/><ellipse cx="260" cy="58" rx="90" ry="34"/><ellipse cx="420" cy="66" rx="110" ry="36"/></g></svg>
-    <svg style="position:absolute;left:5%;bottom:-30px;" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="150" cy="70" rx="150" ry="48"/><ellipse cx="350" cy="60" rx="90" ry="36"/></g></svg>
+    <svg class="c1" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="140" cy="80" rx="140" ry="44"/><ellipse cx="320" cy="70" rx="80" ry="34"/><ellipse cx="460" cy="78" rx="110" ry="40"/></g></svg>
+    <svg class="c2" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="120" cy="70" rx="120" ry="40"/><ellipse cx="260" cy="58" rx="90" ry="34"/><ellipse cx="420" cy="66" rx="110" ry="36"/></g></svg>
+    <svg class="c3" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="150" cy="70" rx="150" ry="48"/><ellipse cx="350" cy="60" rx="90" ry="36"/></g></svg>
   </div>
 
   <div class="title-wrap"><div class="title">Pink Sky Checker</div></div>
 
   <div class="card" role="main" aria-labelledby="title">
-    <div class="lead">Pick a spot and day. The app gives a short verdict and a single Photo-ready score (1–10) so you can decide fast.</div>
+    <div class="lead">Pick a location and day. You’ll get a short verdict plus a simple Photo-ready score (1–10).</div>
 
     <label for="manual">Location</label>
-    <div class="row">
-      <button id="btnGeo" class="btn" aria-label="Use my location">Use my location</button>
+    <div class="row inline" style="margin-bottom:10px">
+      <button id="btnGeo" class="btn">Use my location</button>
       <input id="manual" placeholder="Chevy Chase, MD or 38.96,-77.09" aria-label="Location input" />
-      <select id="daySelect" title="Choose day"></select>
+      <select id="daySelect" title="Choose day" style="max-width:220px"></select>
     </div>
 
-    <div style="margin-top:12px">
-      <button id="btnCheck" class="btn" style="width:100%">Check</button>
+    <div style="margin-top:6px">
+      <button id="btnCheck" class="btn full">Check</button>
     </div>
 
     <div id="output" class="result" style="display:none" role="status" aria-live="polite"></div>
 
     <div id="after" style="display:none">
-      <div class="details" id="tips" style="display:none"></div>
+      <div class="tips" id="tips" style="display:none"></div>
       <div class="tiny" id="notes" style="display:none"></div>
     </div>
   </div>
@@ -109,7 +141,7 @@
   <footer>Made with soft clouds and stubborn optimism ☁️</footer>
 
 <script>
-/* ---------------- logic (keeps the forecasting & storage behavior) ---------------- */
+/* ---------------- (unchanged logic, only layout updated above) ---------------- */
 const STORAGE_KEY='pinksky_saved_location';
 function saveLocationToStorage(name,lat,lon){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({name,lat,lon})); }catch(e){console.warn(e)} }
 function loadLocationFromStorage(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(!s) return null; const o=JSON.parse(s); if(o && typeof o.lat==='number'&&typeof o.lon==='number') return o;}catch(e){console.warn(e)} return null; }
@@ -121,52 +153,31 @@ function populateDaySelect(){ const sel=document.getElementById('daySelect'); se
 populateDaySelect();
 
 function nearestIndex(timesISO,targetDate){ let best=0,bestD=1e12; for(let i=0;i<timesISO.length;i++){ const d=Math.abs(new Date(timesISO[i]).getTime()-targetDate.getTime()); if(d<bestD){bestD=d;best=i}} return best; }
-
 function buildUrls(lat,lon){ const base=f=>`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&hourly=${f}&timezone=auto`; return [base('cloudcover,cloudcover_high,cloudcover_mid,cloudcover_low,pm2_5'), base('cloudcover,pm2_5'), base('cloudcover')]; }
 async function tryFetchUrls(urls){ for(const u of urls){ try{ const r=await fetch(u); const j=await r.json(); if(j && j.daily && j.hourly && j.hourly.time && j.hourly.time.length){ if(j.hourly.cloudcover || j.hourly.cloudcover===0) return j; } }catch(e){console.warn(e)} } return null; }
 
-/* mapping old numeric score into 1-10 for photo-ready */
 function scoreToScale(score){
-  // clamp roughly -2 .. +6
   const min=-2, max=6;
   const s=Math.max(min, Math.min(max, score));
-  const pct=(s-min)/(max-min); // 0..1
-  return Math.round(1 + pct*9); // 1..10
+  const pct=(s-min)/(max-min);
+  return Math.round(1 + pct*9);
 }
 function scaleColor(n){
-  // 1->pink, 10->blue via linear interpolation
   const t=(n-1)/9;
-  // interpolate rgb for pink (#ff8fbf) to blue (#6e9bff)
   const a=[255,143,191], b=[110,155,255];
   const r=Math.round(a[0]+(b[0]-a[0])*t), g=Math.round(a[1]+(b[1]-a[1])*t), bl=Math.round(a[2]+(b[2]-a[2])*t);
   return `rgb(${r},${g},${bl})`;
 }
+function airQualityLabel(pm2){ if(pm2==null) return null; if(pm2<=12) return 'Good'; if(pm2<=35) return 'Moderate'; return 'Poor'; }
 
-/* small AQ label */
-function airQualityLabel(pm2){
-  if(pm2==null) return null;
-  if(pm2 <= 12) return 'Good';
-  if(pm2 <= 35) return 'Moderate';
-  return 'Poor';
-}
-
-/* geocode (accept lat,lons or use nominatim), but reuse saved name to avoid repeat */
 async function fetchCoordsFromText(text){
   const latlon = text.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
   if(latlon) return {lat:+latlon[1], lon:+latlon[2], name:`${+latlon[1].toFixed(4)},${+latlon[2].toFixed(4)}`};
   const saved = loadLocationFromStorage();
   if(saved && saved.name===text) return {lat:saved.lat, lon:saved.lon, name:saved.name};
-  try{
-    const q=encodeURIComponent(text);
-    const url=`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`;
-    const r=await fetch(url,{headers:{'Accept-Language':'en'}});
-    const j=await r.json();
-    if(j && j[0]) return {lat:+j[0].lat, lon:+j[0].lon, name:j[0].display_name};
-  }catch(e){console.warn(e)}
-  return null;
+  try{ const q=encodeURIComponent(text); const url=`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`; const r=await fetch(url,{headers:{'Accept-Language':'en'}}); const j=await r.json(); if(j && j[0]) return {lat:+j[0].lat, lon:+j[0].lon, name:j[0].display_name}; }catch(e){console.warn(e)} return null;
 }
 
-/* main check: fetch forecast, compute score, show compact UI */
 async function check(lat,lon,displayName){
   const out=document.getElementById('output'); out.style.display='block'; out.textContent='Checking forecast…'; document.getElementById('after').style.display='none';
   try{
@@ -176,7 +187,6 @@ async function check(lat,lon,displayName){
     const dayIndex=parseInt(document.getElementById('daySelect').value||'0',10);
     if(!json.daily || !json.daily.sunset || dayIndex>=json.daily.sunset.length){ out.innerHTML=`<div style="color:#ff6fb5;font-weight:800">No forecast for that day. Try a nearer day.</div>`; return; }
 
-    // save location for reuse
     const nameToSave = displayName || document.getElementById('manual').value.trim() || `${lat.toFixed(4)},${lon.toFixed(4)}`;
     saveLocationToStorage(nameToSave, lat, lon);
 
@@ -190,7 +200,6 @@ async function check(lat,lon,displayName){
     const clow = json.hourly.cloudcover_low ? json.hourly.cloudcover_low[idx] : null;
     const pm2 = json.hourly.pm2_5 ? json.hourly.pm2_5[idx] : null;
 
-    // scoring (same as previous)
     let score = 0;
     if (chigh !== null) { if (chigh >= 15 && chigh <= 85) score += 2; else if (chigh > 85) score -= 1; else score += 0.5; }
     if (cmid !== null) { if (cmid >= 10 && cmid <= 80) score += 1.5; else if (cmid > 80) score -= 1; }
@@ -198,7 +207,6 @@ async function check(lat,lon,displayName){
     if (cloud !== null) { if (cloud >= 10 && cloud <= 80) score += 1; else if (cloud === 0) score -= 0.8; else if (cloud > 90) score -= 1.2; }
     if (pm2 !== null) { if (pm2 <= 12) score += 1.2; else if (pm2 <= 35) score += 0.2; else score -= 1.2; }
 
-    // compact verdict text (short)
     let shortText=''; let reason='';
     if (score >= 4) { shortText='Great chance of vivid colors'; reason='Thin clouds at good altitudes'; }
     else if (score >= 1.5) { shortText='Possible — might catch color'; reason='Thin high/mid clouds present'; }
@@ -214,16 +222,15 @@ async function check(lat,lon,displayName){
     if (clow !== null) details.push(`Low ${Math.round(clow)}%`);
     if (pm2 !== null) details.push(`AQ: ${airQualityLabel(pm2)}`);
 
-    // render compact UI
     out.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px" class="score-row">
-        <div>
-          <div class="score-big">Photo-ready</div>
-          <div class="verdict-short" style="margin-top:6px;font-weight:800">${shortText}</div>
+      <div class="score-row">
+        <div class="score-left">
+          <div class="score-title">Photo-ready</div>
+          <div class="verdict">${shortText}</div>
           <div class="tagline">${reason} · Best check ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
         </div>
-        <div style="text-align:right">
-          <div class="score-big" style="font-size:28px">${rating}/10</div>
+        <div class="score-block">
+          <div class="score-big">${rating}/10</div>
           <div class="score-pill" style="background:${pillColor}">${rating}</div>
         </div>
       </div>
@@ -231,7 +238,6 @@ async function check(lat,lon,displayName){
       <div class="tiny">Sunset: ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
     `;
 
-    // tips + ICS
     document.getElementById('after').style.display='block';
     document.getElementById('tips').style.display='block';
     document.getElementById('tips').innerHTML = `<strong>Photo tip:</strong> arrive at ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}. Tap focus, lower exposure a touch, use Live Photo/burst.`;
@@ -241,79 +247,35 @@ async function check(lat,lon,displayName){
     const ics = makeICS(best);
     const blob = new Blob([ics], {type:'text/calendar'});
     const urlBlob = URL.createObjectURL(blob);
-    // add ICS link inside tips
     const icsLink = document.createElement('a');
-    icsLink.href = urlBlob;
-    icsLink.download = 'pink-sky-reminder.ics';
-    icsLink.className='tiny';
-    icsLink.style.display='inline-block';
-    icsLink.style.marginTop='6px';
-    icsLink.textContent='📅 Add reminder';
-    document.getElementById('tips').appendChild(document.createElement('br'));
-    document.getElementById('tips').appendChild(icsLink);
+    icsLink.href = urlBlob; icsLink.download = 'pink-sky-reminder.ics';
+    icsLink.textContent = '📅 Add reminder';
+    icsLink.style.display='inline-block'; icsLink.style.marginTop='8px'; icsLink.style.color='#243046'; document.getElementById('tips').appendChild(document.createElement('br')); document.getElementById('tips').appendChild(icsLink);
 
-  }catch(err){
-    console.error(err);
-    out.innerHTML = `<div style="color:var(--low);font-weight:800">Error fetching forecast — check internet and try again.</div>`;
-  }
+  }catch(err){ console.error(err); out.innerHTML=`<div style="color:#ff6fb5;font-weight:800">Error fetching forecast — check internet and try again.</div>`; }
 }
 
-/* wiring: check button & geolocation & saved name */
 async function onCheckClicked(){
-  const v = document.getElementById('manual').value.trim();
+  const v=document.getElementById('manual').value.trim();
   if(!v) return alert('Type a city or coordinates, or press "Use my location".');
-  const saved = loadLocationFromStorage();
-  const latlonRegex = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
-  const latlon = v.match(latlonRegex);
-  if(latlon){ return await check(+latlon[1], +latlon[2], `${+latlon[1].toFixed(4)},${+latlon[2].toFixed(4)}`); }
-  else if(saved && saved.name===v){ return await check(saved.lat, saved.lon, saved.name); }
-  else{
-    document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Resolving location…';
-    const coords = await fetchCoordsFromText(v);
-    if(!coords){ document.getElementById('output').innerHTML=`<div style="color:var(--low);font-weight:800">Could not resolve that location. Try "Chevy Chase, MD" or coordinates.</div>`; return; }
-    document.getElementById('manual').value = coords.name;
-    await check(coords.lat, coords.lon, coords.name);
-  }
+  const saved=loadLocationFromStorage();
+  const latlonRegex=/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/;
+  const latlon=v.match(latlonRegex);
+  if(latlon) return await check(+latlon[1], +latlon[2], `${+latlon[1].toFixed(4)},${+latlon[2].toFixed(4)}`);
+  else if(saved && saved.name===v) return await check(saved.lat, saved.lon, saved.name);
+  else{ document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Resolving location…'; const coords=await fetchCoordsFromText(v); if(!coords){ document.getElementById('output').innerHTML=`<div style="color:#ff6fb5;font-weight:800">Could not resolve that location. Try "Chevy Chase, MD" or coordinates.</div>`; return; } document.getElementById('manual').value=coords.name; await check(coords.lat, coords.lon, coords.name); }
 }
 document.getElementById('btnCheck').addEventListener('click', onCheckClicked);
 
 document.getElementById('btnGeo').addEventListener('click', async ()=>{
   if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
   document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Locating…';
-  navigator.geolocation.getCurrentPosition(async (pos)=>{
-    const lat=pos.coords.latitude, lon=pos.coords.longitude;
-    const displayName = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-    document.getElementById('manual').value = displayName;
-    await check(lat, lon, displayName);
-  }, (err)=>{
-    alert('Location denied/failed. You can type your city or coords instead.'); console.warn(err); document.getElementById('output').style.display='none';
-  }, {timeout:10000});
+  navigator.geolocation.getCurrentPosition(async (pos)=>{ const lat=pos.coords.latitude, lon=pos.coords.longitude; const displayName=`${lat.toFixed(4)},${lon.toFixed(4)}`; document.getElementById('manual').value=displayName; await check(lat,lon,displayName); }, (err)=>{ alert('Location denied/failed. You can type your city or coords instead.'); console.warn(err); document.getElementById('output').style.display='none'; }, {timeout:10000});
 });
 
-/* prefill saved name on load */
-window.addEventListener('DOMContentLoaded', ()=>{
-  const saved = loadLocationFromStorage();
-  if(saved) document.getElementById('manual').value = saved.name;
-});
+window.addEventListener('DOMContentLoaded', ()=>{ const saved=loadLocationFromStorage(); if(saved) document.getElementById('manual').value=saved.name; });
 
-/* ICS helper */
-function makeICS(dt){
-  function toUTCICS(d){ const pad=n=>String(n).padStart(2,'0'); return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'; }
-  const start=toUTCICS(dt); const end=toUTCICS(new Date(dt.getTime()+20*60000));
-  const uid='pink-sky-'+Date.now()+'@local'; const summary='Pink-sky check'; const body='Sunset +10 minutes — check for colorful afterglow.';
-  return `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//pink-sky//EN
-BEGIN:VEVENT
-UID:${uid}
-DTSTAMP:${start}
-DTSTART:${start}
-DTEND:${end}
-SUMMARY:${summary}
-DESCRIPTION:${body}
-END:VEVENT
-END:VCALENDAR`;
-}
+function makeICS(dt){ function toUTCICS(d){ const pad=n=>String(n).padStart(2,'0'); return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'; } const start=toUTCICS(dt); const end=toUTCICS(new Date(dt.getTime()+20*60000)); const uid='pink-sky-'+Date.now()+'@local'; const summary='Pink-sky check'; const body='Sunset +10 minutes — check for afterglow.'; return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//pink-sky//EN\nBEGIN:VEVENT\nUID:${uid}\nDTSTAMP:${start}\nDTSTART:${start}\nDTEND:${end}\nSUMMARY:${summary}\nDESCRIPTION:${body}\nEND:VEVENT\nEND:VCALENDAR`; }
 </script>
 </body>
 </html>
