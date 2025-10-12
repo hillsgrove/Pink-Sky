@@ -4,119 +4,86 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pink Sky Checker</title>
-
-<!-- Inline minimal web manifest (no extra files) -->
-<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUGluayBTa3kgQ2hlY2tlciIsInNob3J0X25hbWUiOiJQaW5rIFNreSIsInN0YXJ0X3VybCI6Ii8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZjRmOWZmIiwidGhlbWVfY29sb3IiOiIjZjdkOGY2In0=">
-<meta name="theme-color" content="#f7e8f6">
-<!-- Embedded PNG icon so you don't have to upload files separately -->
-<link rel="apple-touch-icon" href="data:image/png;base64,{{PNG_BASE64_PLACEHOLDER}}">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
 <style>
   /* responsive reset */
   *,*::before,*::after{box-sizing:border-box}
   html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#071425}
 
   :root{
-    --pad: clamp(18px,4.8vw,40px);
+    --pad: clamp(16px,4.4vw,36px);    /* base padding */
     --bg-top:#f4f9ff; --bg-bottom:#fff3fb; --card:#ffffff; --muted:#6b7280;
     --pink:#ff78b6; --purple:#b08bff; --blue:#6e9bff;
     --shadow-lg: 0 18px 40px rgba(8,18,40,0.10);
     --shadow-sm: 0 8px 22px rgba(8,18,40,0.06);
-    --radius:16px;
-    --big: clamp(18px, 3.6vw, 20px);    /* main body text a touch larger */
-    --lead: clamp(15px, 2.6vw, 18px);   /* lead/helper text */
-    --title-min: 30px; --title-max: 46px;
+    --radius:14px;
   }
 
-  /* safe-area aware equal left/right padding */
+  /* use safe-area insets so iPhones get equal outer padding */
   body{
     background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
+    /* top/bottom use var, left/right add env(safe-area-inset-*) */
     padding-top: var(--pad);
     padding-bottom: var(--pad);
     padding-left: calc(var(--pad) + env(safe-area-inset-left, 0px));
     padding-right: calc(var(--pad) + env(safe-area-inset-right, 0px));
     -webkit-font-smoothing:antialiased;
-    line-height:1.5;
-    font-size: var(--big);
+    line-height:1.45;
   }
 
   /* Title */
-  .title-wrap{max-width:1100px;margin:0 auto 16px;z-index:2}
+  .title-wrap{max-width:1100px;margin:0 auto 14px;z-index:2}
   .title {
-    display:inline-block;padding:12px 20px;border-radius:30px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.86), rgba(255,255,255,0.72));
+    display:inline-block;padding:10px 18px;border-radius:28px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.85), rgba(255,255,255,0.70));
     box-shadow: 0 10px 28px rgba(107,119,255,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
-    font-weight:900;
-    font-size: clamp(var(--title-min), 6.0vw, var(--title-max));
-    color:transparent; -webkit-background-clip:text;
+    font-weight:900;font-size:clamp(26px,5.2vw,40px); color:transparent; -webkit-background-clip:text;
     background-image: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));
-    text-shadow: 0 8px 28px rgba(107,119,255,0.06);
+    text-shadow: 0 6px 20px rgba(107,119,255,0.06);
   }
 
-  /* Card */
+  /* Card: fluid but constrained and centered */
   .card{
     width:100%;
     max-width:980px;
     margin:0 auto;
     background:var(--card);
-    border-radius:calc(var(--radius) + 2px);
+    border-radius:var(--radius);
     box-shadow:var(--shadow-lg);
-    padding:clamp(18px,3.8vw,28px);
+    padding:clamp(14px,3.4vw,22px);
     border:1px solid rgba(8,15,40,0.04);
   }
 
-  .lead{color:var(--muted);font-size:var(--lead);margin-bottom:10px}
-  label{display:block;margin:10px 0 8px;font-weight:800;color:#051026}
-  .row{display:flex;gap:12px;align-items:center}
+  .lead{color:var(--muted);font-size:clamp(13px,2.1vw,15px);margin-bottom:8px}
+  label{display:block;margin:8px 0 6px;font-weight:700;color:#051026}
+  .row{display:flex;gap:10px;align-items:center}
   .row.col{flex-direction:column;align-items:stretch}
-  input[type="text"]{
-    flex:1;padding:13px;border-radius:14px;border:1px solid rgba(99,102,241,0.06);
-    font-size:16px;min-height:44px;
-  }
-  select{
-    padding:12px;border-radius:14px;border:1px solid rgba(99,102,241,0.06);
-    background:white;font-size:16px;min-width:170px;min-height:44px;
-  }
-
-  /* larger, more tappable buttons */
-  .btn{
-    padding:14px 16px;border-radius:16px;border:0;color:white;font-weight:900;cursor:pointer;
-    background: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));
-    box-shadow: var(--shadow-sm);min-width:100px;font-size:16px;
-  }
+  input[type="text"]{flex:1;padding:11px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);font-size:clamp(14px,2vw,16px)}
+  select{padding:10px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:clamp(14px,2vw,16px);min-width:170px}
+  .btn{padding:12px 14px;border-radius:14px;border:0;color:white;font-weight:800;cursor:pointer;
+    background: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));box-shadow: var(--shadow-sm);min-width:88px}
   .btn.full{width:100%}
 
-  /* result card text bumped up */
-  .result{
-    margin-top:16px;padding:18px;border-radius:14px;
-    background:linear-gradient(180deg, rgba(245,251,255,0.98), rgba(255,248,252,0.98));
-    border:1px solid rgba(99,102,241,0.05);font-size:16px;
-  }
+  .result{margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(245,251,255,0.95), rgba(255,248,252,0.95));
+    border:1px solid rgba(99,102,241,0.05);font-size:clamp(14px,2vw,15px)}
   .score-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .score-left{min-width:0}
-  .score-title{font-weight:900;font-size:18px}
-  .verdict{font-weight:800;margin-top:8px;color:#243046;font-size:16px}
-  .tagline{color:var(--muted);font-size:15px;margin-top:6px}
+  .score-title{font-weight:900;font-size:clamp(16px,2.4vw,22px)}
+  .verdict{font-weight:800;margin-top:6px;color:#243046}
+  .tagline{color:var(--muted);font-size:clamp(12px,1.8vw,13px);margin-top:6px}
   .score-block{text-align:right}
-  .score-pill{display:inline-block;padding:.6rem .8rem;border-radius:999px;color:white;font-weight:900;margin-top:8px;
-    box-shadow: 0 8px 22px rgba(99,102,241,0.10);border: 2px solid rgba(255,255,255,0.12);font-size:16px}
-  .details{color:var(--muted);margin-top:10px;font-size:15px}
-  .tiny{font-size:13px;color:var(--muted);margin-top:10px}
-  .tips{margin-top:14px;font-size:15px;background: linear-gradient(90deg, rgba(255,244,248,0.80), rgba(237,245,255,0.80));padding:14px;border-radius:12px;border:1px solid rgba(107,119,255,0.05)}
+  .score-pill{display:inline-block;padding:.45rem .65rem;border-radius:999px;color:white;font-weight:800;margin-top:8px;
+    box-shadow: 0 6px 18px rgba(99,102,241,0.08);border: 2px solid rgba(255,255,255,0.12)}
+  .details{color:var(--muted);margin-top:8px;font-size:clamp(13px,1.8vw,14px)}
+  .tiny{font-size:12px;color:var(--muted);margin-top:8px}
+  .tips{margin-top:12px;font-size:14px;background: linear-gradient(90deg, rgba(255,244,248,0.65), rgba(237,245,255,0.65));padding:12px;border-radius:12px;border:1px solid rgba(107,119,255,0.05)}
 
-  /* make interactive elements slightly bigger on small screens */
   @media (max-width:720px){
-    .row { gap:14px; flex-direction:column; align-items:stretch }
-    .card { padding:18px }
-    .title { font-size:34px }
-    input[type="text"], select, .btn { font-size:17px; min-height:48px }
-    .score-title{font-size:20px}
-    .verdict{font-size:17px}
+    .row { gap:12px; flex-direction:column; align-items:stretch }
+    .card { padding:16px }
+    .title { font-size:28px }
   }
 
-  footer{max-width:1100px;margin:24px auto 60px;color:var(--muted);text-align:center;font-size:14px}
+  footer{max-width:1100px;margin:20px auto 60px;color:var(--muted);text-align:center;font-size:13px}
 </style>
 </head>
 <body>
@@ -146,7 +113,7 @@
   <footer>Made with soft gradients and stubborn optimism ☁️</footer>
 
 <script>
-/* ---------- app logic (same as previously) ---------- */
+/* ---------- same app logic (no changes) ---------- */
 const STORAGE_KEY='pinksky_saved_location';
 function saveLocationToStorage(name,lat,lon){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({name,lat,lon})); }catch(e){console.warn(e)} }
 function loadLocationFromStorage(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(!s) return null; const o=JSON.parse(s); if(o && typeof o.lat==='number'&&typeof o.lon==='number') return o;}catch(e){console.warn(e)} return null; }
