@@ -5,34 +5,40 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pink Sky Checker</title>
 <style>
-  /* responsive reset */
   *,*::before,*::after{box-sizing:border-box}
   html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#071425}
 
   :root{
-    --pad: clamp(16px,4.4vw,36px);    /* base padding */
     --bg-top:#f4f9ff; --bg-bottom:#fff3fb; --card:#ffffff; --muted:#6b7280;
     --pink:#ff78b6; --purple:#b08bff; --blue:#6e9bff;
     --shadow-lg: 0 18px 40px rgba(8,18,40,0.10);
     --shadow-sm: 0 8px 22px rgba(8,18,40,0.06);
     --radius:14px;
+
+    /* NEW: layout vars for perfect centering */
+    --pad: clamp(16px,4.4vw,36px);
+    --content: 980px; /* max content width */
   }
 
-  /* use safe-area insets so iPhones get equal outer padding */
   body{
     background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
-    /* top/bottom use var, left/right add env(safe-area-inset-*) */
-    padding-top: var(--pad);
-    padding-bottom: var(--pad);
-    padding-left: calc(var(--pad) + env(safe-area-inset-left, 0px));
-    padding-right: calc(var(--pad) + env(safe-area-inset-right, 0px));
+    padding: var(--pad);
+    /* equal L/R padding + iPhone safe-area support */
+    padding-left: max(var(--pad), env(safe-area-inset-left));
+    padding-right: max(var(--pad), env(safe-area-inset-right));
     -webkit-font-smoothing:antialiased;
     line-height:1.45;
+    overflow-x:hidden; /* guard against accidental overflow */
   }
 
   /* Title */
-  .title-wrap{max-width:1100px;margin:0 auto 14px;z-index:2}
-  .title {
+  .title-wrap{
+    max-width: var(--content);
+    width: 100%;
+    margin-left:auto; margin-right:auto;
+    margin-bottom:14px;
+  }
+  .title{
     display:inline-block;padding:10px 18px;border-radius:28px;
     background: linear-gradient(90deg, rgba(255,255,255,0.85), rgba(255,255,255,0.70));
     box-shadow: 0 10px 28px rgba(107,119,255,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
@@ -41,11 +47,11 @@
     text-shadow: 0 6px 20px rgba(107,119,255,0.06);
   }
 
-  /* Card: fluid but constrained and centered */
+  /* Card container — NO vw widths */
   .card{
-    width:100%;
-    max-width:980px;
-    margin:0 auto;
+    max-width: var(--content);
+    width: 100%;
+    margin-left:auto; margin-right:auto;
     background:var(--card);
     border-radius:var(--radius);
     box-shadow:var(--shadow-lg);
@@ -55,27 +61,47 @@
 
   .lead{color:var(--muted);font-size:clamp(13px,2.1vw,15px);margin-bottom:8px}
   label{display:block;margin:8px 0 6px;font-weight:700;color:#051026}
+
   .row{display:flex;gap:10px;align-items:center}
   .row.col{flex-direction:column;align-items:stretch}
   input[type="text"]{flex:1;padding:11px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);font-size:clamp(14px,2vw,16px)}
   select{padding:10px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:clamp(14px,2vw,16px);min-width:170px}
-  .btn{padding:12px 14px;border-radius:14px;border:0;color:white;font-weight:800;cursor:pointer;
-    background: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));box-shadow: var(--shadow-sm);min-width:88px}
+
+  .btn{
+    padding:12px 14px;border-radius:14px;border:0;color:white;font-weight:800;cursor:pointer;
+    background: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));
+    box-shadow: var(--shadow-sm);
+    min-width:88px;
+  }
   .btn.full{width:100%}
 
-  .result{margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(245,251,255,0.95), rgba(255,248,252,0.95));
-    border:1px solid rgba(99,102,241,0.05);font-size:clamp(14px,2vw,15px)}
+  .result{
+    margin-top:14px;padding:14px;border-radius:12px;
+    background:linear-gradient(180deg, rgba(245,251,255,0.95), rgba(255,248,252,0.95));
+    border:1px solid rgba(99,102,241,0.05);font-size:clamp(14px,2vw,15px)
+  }
+
   .score-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .score-left{min-width:0}
   .score-title{font-weight:900;font-size:clamp(16px,2.4vw,22px)}
   .verdict{font-weight:800;margin-top:6px;color:#243046}
   .tagline{color:var(--muted);font-size:clamp(12px,1.8vw,13px);margin-top:6px}
+
   .score-block{text-align:right}
-  .score-pill{display:inline-block;padding:.45rem .65rem;border-radius:999px;color:white;font-weight:800;margin-top:8px;
-    box-shadow: 0 6px 18px rgba(99,102,241,0.08);border: 2px solid rgba(255,255,255,0.12)}
+  .score-pill{
+    display:inline-block;padding:.45rem .65rem;border-radius:999px;color:white;font-weight:800;margin-top:8px;
+    box-shadow: 0 6px 18px rgba(99,102,241,0.08);
+    border: 2px solid rgba(255,255,255,0.12)
+  }
+
   .details{color:var(--muted);margin-top:8px;font-size:clamp(13px,1.8vw,14px)}
   .tiny{font-size:12px;color:var(--muted);margin-top:8px}
-  .tips{margin-top:12px;font-size:14px;background: linear-gradient(90deg, rgba(255,244,248,0.65), rgba(237,245,255,0.65));padding:12px;border-radius:12px;border:1px solid rgba(107,119,255,0.05)}
+
+  .tips{
+    margin-top:12px;font-size:14px;
+    background: linear-gradient(90deg, rgba(255,244,248,0.65), rgba(237,245,255,0.65));
+    padding:12px;border-radius:12px;border:1px solid rgba(107,119,255,0.05)
+  }
 
   @media (max-width:720px){
     .row { gap:12px; flex-direction:column; align-items:stretch }
@@ -83,7 +109,12 @@
     .title { font-size:28px }
   }
 
-  footer{max-width:1100px;margin:20px auto 60px;color:var(--muted);text-align:center;font-size:13px}
+  footer{
+    max-width: var(--content);
+    width:100%;
+    margin:20px auto 60px;
+    color:var(--muted);text-align:center;font-size:13px
+  }
 </style>
 </head>
 <body>
@@ -113,7 +144,7 @@
   <footer>Made with soft gradients and stubborn optimism ☁️</footer>
 
 <script>
-/* ---------- same app logic (no changes) ---------- */
+/* ---------- storage & helpers (no coords input) ---------- */
 const STORAGE_KEY='pinksky_saved_location';
 function saveLocationToStorage(name,lat,lon){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({name,lat,lon})); }catch(e){console.warn(e)} }
 function loadLocationFromStorage(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(!s) return null; const o=JSON.parse(s); if(o && typeof o.lat==='number'&&typeof o.lon==='number') return o;}catch(e){console.warn(e)} return null; }
@@ -121,17 +152,46 @@ function loadLocationFromStorage(){ try{ const s=localStorage.getItem(STORAGE_KE
 function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
 function weekdayShort(d){ return d.toLocaleDateString(undefined,{weekday:'short'}); }
 function md(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
-function populateDaySelect(){ const sel=document.getElementById('daySelect'); sel.innerHTML=''; const now=new Date(); for(let i=0;i<7;i++){ const dt=addDays(now,i); const label=(i===0?'Today':(i===1?'Tomorrow':weekdayShort(dt)))+' ('+md(dt)+')'; const o=document.createElement('option'); o.value=''+i; o.textContent=label; sel.appendChild(o);} }
+function populateDaySelect(){
+  const sel=document.getElementById('daySelect'); sel.innerHTML='';
+  const now=new Date();
+  for(let i=0;i<7;i++){
+    const dt=addDays(now,i);
+    const label=(i===0?'Today':(i===1?'Tomorrow':weekdayShort(dt)))+' ('+md(dt)+')';
+    const o=document.createElement('option'); o.value=''+i; o.textContent=label; sel.appendChild(o);
+  }
+}
 populateDaySelect();
 
-function nearestIndex(timesISO,targetDate){ let best=0,bestD=1e12; for(let i=0;i<timesISO.length;i++){ const d=Math.abs(new Date(timesISO[i]).getTime()-targetDate.getTime()); if(d<bestD){bestD=d;best=i}} return best; }
-function buildUrls(lat,lon){ const base=f=>`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&hourly=${f}&timezone=auto`; return [base('cloudcover,cloudcover_high,cloudcover_mid,cloudcover_low,pm2_5'), base('cloudcover,pm2_5'), base('cloudcover')]; }
-async function tryFetchUrls(urls){ for(const u of urls){ try{ const r=await fetch(u); const j=await r.json(); if(j && j.daily && j.hourly && j.hourly.time && j.hourly.time.length){ if(j.hourly.cloudcover || j.hourly.cloudcover===0) return j; } }catch(e){console.warn(e)} } return null; }
+function nearestIndex(timesISO,targetDate){
+  let best=0,bestD=1e12;
+  for(let i=0;i<timesISO.length;i++){
+    const d=Math.abs(new Date(timesISO[i]).getTime()-targetDate.getTime());
+    if(d<bestD){bestD=d;best=i}
+  }
+  return best;
+}
+function buildUrls(lat,lon){
+  const base=f=>`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&hourly=${f}&timezone=auto`;
+  return [base('cloudcover,cloudcover_high,cloudcover_mid,cloudcover_low,pm2_5'), base('cloudcover,pm2_5'), base('cloudcover')];
+}
+async function tryFetchUrls(urls){
+  for(const u of urls){
+    try{
+      const r=await fetch(u); const j=await r.json();
+      if(j && j.daily && j.hourly && j.hourly.time && j.hourly.time.length){
+        if(j.hourly.cloudcover || j.hourly.cloudcover===0) return j;
+      }
+    }catch(e){console.warn(e)}
+  }
+  return null;
+}
 
 function scoreToScale(score){ const min=-2, max=6; const s=Math.max(min, Math.min(max, score)); const pct=(s-min)/(max-min); return Math.round(1 + pct*9); }
 function scaleColor(n){ const t=(n-1)/9; const a=[255,120,182], b=[110,155,255]; const r=Math.round(a[0]+(b[0]-a[0])*t), g=Math.round(a[1]+(b[1]-a[1])*t), bl=Math.round(a[2]+(b[2]-a[2])*t); return `rgb(${r},${g},${bl})`; }
 function airQualityLabel(pm2){ if(pm2==null) return null; if(pm2<=12) return 'Good'; if(pm2<=35) return 'Moderate'; return 'Poor'; }
 
+/* reverse geocode friendly label (for Use my location) */
 async function reverseGeocode(lat,lon){
   try{
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
@@ -150,6 +210,7 @@ async function reverseGeocode(lat,lon){
   return null;
 }
 
+/* geocode free text (no coordinate strings accepted) */
 async function fetchCoordsFromText(text){
   try{
     const q = encodeURIComponent(text);
@@ -157,10 +218,11 @@ async function fetchCoordsFromText(text){
     const r = await fetch(url, {headers:{'Accept-Language':'en'}});
     const j = await r.json();
     if(j && j[0]) return {lat:+j[0].lat, lon:+j[0].lon, name:j[0].display_name};
-  }catch(e){console.warn('geocode fail', e); }
+  }catch(e){ console.warn('geocode fail', e); }
   return null;
 }
 
+/* main check logic */
 async function check(lat,lon,displayName){
   const out=document.getElementById('output'); out.style.display='block'; out.textContent='Checking forecast…'; document.getElementById('after').style.display='none';
   try{
@@ -239,13 +301,17 @@ async function check(lat,lon,displayName){
   }catch(err){ console.error(err); out.innerHTML=`<div style="color:var(--pink);font-weight:800">Error fetching forecast — check internet and try again.</div>`; }
 }
 
+/* actions */
 async function onCheckClicked(){
   const v=document.getElementById('manual').value.trim();
   if(!v) return alert('Type a city or neighborhood (e.g. "Chevy Chase, MD") or press "Use my location".');
   document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Resolving location…';
   const coords = await fetchCoordsFromText(v);
-  if(!coords){ document.getElementById('output').innerHTML=`<div style="color:var(--pink);font-weight:800">Could not find that place. Try "Chevy Chase, MD" or a nearby city.</div>`; return; }
-  const label = coords.name || document.getElementById('manual').value.trim();
+  if(!coords){
+    document.getElementById('output').innerHTML=`<div style="color:var(--pink);font-weight:800">Could not find that place. Try "Chevy Chase, MD" or a nearby city.</div>`;
+    return;
+  }
+  const label = coords.name || v;
   document.getElementById('manual').value = label;
   await check(coords.lat, coords.lon, label);
 }
@@ -260,37 +326,42 @@ document.getElementById('btnGeo').addEventListener('click', async ()=>{
     const label = rev && rev.name ? rev.name : 'Your location';
     document.getElementById('manual').value = label;
     await check(lat,lon,label);
-  }, (err)=>{ alert('Location denied/failed. You can type your city or neighborhood instead.'); console.warn(err); document.getElementById('output').style.display='none'; }, {timeout:10000});
+  }, (err)=>{
+    alert('Location denied/failed. You can type your city or neighborhood instead.');
+    console.warn(err); document.getElementById('output').style.display='none';
+  }, {timeout:10000});
 });
 
+/* prefill saved friendly name on load */
 window.addEventListener('DOMContentLoaded', ()=>{
   const saved = loadLocationFromStorage();
   if(saved) document.getElementById('manual').value = saved.name;
 });
 
-function reverseGeocode(lat,lon){
-  return fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`, {headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(j=>{
-      if(j && j.address){
-        const a=j.address;
-        const city = a.city || a.town || a.village || a.hamlet || a.county;
-        const state = a.state || a.region || a.county;
-        const postcode = a.postcode;
-        let name = city ? (state ? `${city}, ${state}` : city) : (state ? state : (j.display_name || 'Your location'));
-        if(postcode) name = `${name} ${postcode}`;
-        return {name};
-      }
-      return null;
-    }).catch(e=>{console.warn(e); return null;});
+/* ICS helper */
+function makeICS(dt){
+  function toUTCICS(d){ const pad=n=>String(n).padStart(2,'0');
+    return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+
+           pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z';
+  }
+  const start=toUTCICS(dt);
+  const end=toUTCICS(new Date(dt.getTime()+20*60000));
+  const uid='pink-sky-'+Date.now()+'@local';
+  const summary='Pink-sky check';
+  const body='Sunset +10 minutes — check for afterglow.';
+  return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//pink-sky//EN
+BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${start}
+DTSTART:${start}
+DTEND:${end}
+SUMMARY:${summary}
+DESCRIPTION:${body}
+END:VEVENT
+END:VCALENDAR`;
 }
-
-function fetchCoordsFromText(text){
-  return fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=1`, {headers:{'Accept-Language':'en'}})
-    .then(r=>r.json()).then(j=> j && j[0] ? {lat:+j[0].lat, lon:+j[0].lon, name:j[0].display_name} : null)
-    .catch(e=>{console.warn(e); return null;});
-}
-
-function makeICS(dt){ function toUTCICS(d){ const pad=n=>String(n).padStart(2,'0'); return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'; } const start=toUTCICS(dt); const end=toUTCICS(new Date(dt.getTime()+20*60000)); const uid='pink-sky-'+Date.now()+'@local'; const summary='Pink-sky check'; const body='Sunset +10 minutes — check for afterglow.'; return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//pink-sky//EN\nBEGIN:VEVENT\nUID:${uid}\nDTSTAMP:${start}\nDTSTART:${start}\nDTEND:${end}\nSUMMARY:${summary}\nDESCRIPTION:${body}\nEND:VEVENT\nEND:VCALENDAR`; }
 </script>
 </body>
 </html>
