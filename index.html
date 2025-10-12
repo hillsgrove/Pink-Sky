@@ -6,71 +6,89 @@
 <title>Pink Sky Checker</title>
 <style>
   :root{
-    --page-top:#e9f4ff;
-    --page-bottom:#fff3fb;
+    --page-top:#eaf5ff;
+    --page-bottom:#fff4fb;
     --card:#ffffff;
-    --ink:#071026;
+    --ink:#061425;
     --muted:#667085;
-    --accent-pink:#ff78b6;
+    --accent-pink:#ff6fb5;
     --accent-blue:#6e93ff;
     --accent-purple:#9a7bff;
     --soft-border: rgba(8,15,40,0.06);
-    --shadow: 0 10px 30px rgba(8,18,40,0.08);
+    --shadow: 0 12px 34px rgba(8,18,40,0.10);
     --pill-bg: rgba(139,92,246,0.08);
   }
   html,body{height:100%}
   body{
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     margin:0; min-height:100%;
     background: linear-gradient(180deg,var(--page-top),var(--page-bottom));
     color:var(--ink); -webkit-font-smoothing:antialiased;
-    line-height:1.45; padding:30px 16px;
+    line-height:1.45; padding:34px 16px;
+    position:relative;
+    overflow-y:auto;
   }
 
-  /* TITLE — outside the card, 90s bubble / 3D-ish */
-  .title-wrap{max-width:760px;margin:0 auto 14px; text-align:left}
+  /* Decorative fluffy clouds (subtle, behind everything) */
+  .bg-cloud { position: absolute; opacity: 0.12; pointer-events: none; }
+  .bg-cloud.c1 { top: 8px; left: -40px; width: 340px; transform: rotate(-6deg); }
+  .bg-cloud.c2 { top: 120px; right: -60px; width: 420px; transform: scaleX(-1) rotate(4deg); }
+  .bg-cloud.c3 { bottom: -30px; left: 10px; width: 380px; opacity: 0.08; }
+
+  /* TITLE outside the card (big, bubble gradient + subtle 3D) */
+  .title-wrap{max-width:760px;margin:0 auto 16px; text-align:left; position:relative; z-index:2;}
   .title {
     display:inline-block;
-    padding:14px 20px;
-    border-radius:20px;
-    background: linear-gradient(90deg,#fff,#fff);
-    box-shadow: 0 8px 24px rgba(11,18,32,0.06);
+    padding:12px 20px;
+    border-radius:28px;
     font-weight:900;
-    font-size:30px;
+    font-size:34px;
     letter-spacing:-0.02em;
     line-height:1;
     color:transparent;
     -webkit-background-clip:text;
     background-clip:text;
     background-image: linear-gradient(90deg, var(--accent-pink), var(--accent-purple), var(--accent-blue));
-    /* faux 3D via layered text-shadows */
-    text-shadow:
-      0 1px 0 rgba(255,255,255,0.6),
-      0 4px 10px rgba(106,90,205,0.14),
-      0 8px 30px rgba(107,119,255,0.06);
+    text-shadow: 0 10px 28px rgba(107,119,255,0.09);
   }
 
   /* CARD */
-  .card{max-width:760px;margin:12px auto;padding:18px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--soft-border);}
-  h2{margin:0 0 8px;font-size:16px;color:var(--ink)}
-  .lead{color:var(--muted);margin-bottom:8px;font-size:14px}
+  .card{max-width:760px;margin:14px auto;padding:18px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--soft-border);position:relative;z-index:2}
+  h2{margin:0 0 8px;font-size:15px;color:var(--ink);font-weight:800}
+  .lead{color:var(--muted);margin-bottom:10px;font-size:15px}
 
-  label{display:block;margin:10px 0 6px;font-weight:700;color:var(--ink);font-size:14px}
+  label{display:block;margin:8px 0 6px;font-weight:700;color:var(--ink);font-size:14px}
   input[type="text"]{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);outline:none;font-size:15px}
   input[type="text"]::placeholder{color:#c7cfda}
   .row{display:flex;gap:10px;align-items:center}
   button.primary{
-    padding:10px 14px;border-radius:10px;border:0;color:white;font-weight:800;cursor:pointer;
+    padding:12px 14px;border-radius:12px;border:0;color:white;font-weight:800;cursor:pointer;
     background: linear-gradient(90deg,var(--accent-pink),var(--accent-purple),var(--accent-blue));
-    box-shadow: 0 8px 20px rgba(107,119,255,0.16);
-    min-width:92px;
+    box-shadow: 0 10px 28px rgba(107,119,255,0.14);
+    min-width:96px;
+    transition:transform .12s ease;
   }
+  button.primary:active{ transform:translateY(1px) scale(.997); }
+
   select{padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:15px}
 
-  .result{margin-top:12px;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(243,250,255,0.7), rgba(255,248,252,0.7));border:1px solid rgba(99,102,241,0.05)}
-  .good{color:var(--accent-blue);font-weight:800}
-  .meh{color:var(--accent-purple);font-weight:800}
-  .bad{color:var(--accent-pink);font-weight:800}
+  .result{
+    margin-top:14px;padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(243,250,255,0.85), rgba(255,248,252,0.85));
+    border:1px solid rgba(99,102,241,0.05);
+    font-size:15px;
+  }
+
+  /* verdict styling — bigger, with playful tagline */
+  .verdict {
+    font-weight:900;
+    font-size:18px;
+    margin-bottom:6px;
+  }
+  .verdict .tagline { display:block; font-weight:600; font-size:13px; margin-top:6px; color:var(--muted) }
+
+  .good { color: var(--accent-blue); }
+  .meh { color: var(--accent-purple); }
+  .bad { color: var(--accent-pink); }
 
   .details{color:var(--muted);margin-top:8px;font-size:14px}
   .notes{font-size:13px;color:var(--muted);margin-top:10px}
@@ -78,16 +96,28 @@
   .tips{margin-top:12px;font-size:14px;background: linear-gradient(90deg, rgba(255,244,248,0.6), rgba(237,245,255,0.6));padding:12px;border-radius:10px;border:1px solid rgba(107,119,255,0.06)}
   a.ics{display:inline-block;margin-top:10px;color:var(--ink);text-decoration:none;padding:8px 10px;border-radius:8px;background:rgba(139,92,246,0.08);font-weight:700}
 
-  .confidence{margin-top:8px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
-  .conf-pill{padding:6px 8px;border-radius:999px;background:rgba(15,23,42,0.04);font-weight:700;color:var(--muted);font-size:13px}
+  .confidence{margin-top:10px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .conf-pill{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg, rgba(107,119,255,0.10), rgba(255,111,181,0.06));font-weight:700;color:var(--muted);font-size:13px}
+  .conf-extra{font-size:12px;color:var(--muted)}
 
   .error{color:var(--accent-pink);font-weight:800}
-  @media(max-width:720px){ .row{flex-direction:column;align-items:stretch} .primary{width:100%} select{width:100%} input[type="text"]{width:100%} }
+  @media(max-width:720px){
+    .row{flex-direction:column;align-items:stretch}
+    .primary{width:100%}
+    select{width:100%}
+    input[type="text"]{width:100%}
+    .title{font-size:28px}
+  }
 
-  footer{max-width:760px;margin:18px auto 60px;color:var(--muted);text-align:center;font-size:13px}
+  footer{max-width:760px;margin:18px auto 60px;color:var(--muted);text-align:center;font-size:13px;position:relative;z-index:2}
 </style>
 </head>
 <body>
+
+  <!-- fluffy SVG clouds (decorative) -->
+  <svg class="bg-cloud c1" viewBox="0 0 512 128" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="110" cy="64" rx="110" ry="40"/><ellipse cx="240" cy="54" rx="76" ry="34"/><ellipse cx="360" cy="62" rx="100" ry="36"/></g></svg>
+  <svg class="bg-cloud c2" viewBox="0 0 512 128" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="110" cy="64" rx="110" ry="40"/><ellipse cx="240" cy="54" rx="76" ry="34"/><ellipse cx="360" cy="62" rx="100" ry="36"/></g></svg>
+  <svg class="bg-cloud c3" viewBox="0 0 512 128" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="110" cy="64" rx="110" ry="40"/><ellipse cx="240" cy="54" rx="76" ry="34"/><ellipse cx="360" cy="62" rx="100" ry="36"/></g></svg>
 
   <!-- TITLE outside the card -->
   <div class="title-wrap">
@@ -96,7 +126,7 @@
 
   <div class="card" role="main" aria-labelledby="title">
     <h2 id="title-sub">Location & Day</h2>
-    <div class="lead">Pick a location and day — the checker will give a friendly verdict and the best minute to be outside for a colorful afterglow.</div>
+    <div class="lead">Choose a location and day — the checker gives a friendly verdict and the best minute to step outside for colorful afterglow (and photo karma).</div>
 
     <label for="manual">Location & Day</label>
     <div class="row" aria-hidden="false">
@@ -105,7 +135,7 @@
       <select id="daySelect" title="Choose day"></select>
     </div>
 
-    <div style="margin-top:10px;display:flex;gap:10px">
+    <div style="margin-top:12px;display:flex;gap:10px">
       <button id="btnCheck" class="primary" style="flex:1">Check</button>
     </div>
 
@@ -121,12 +151,11 @@
   </div>
 
   <footer>
-    <div style="height:6px"></div>
     <div>Made with soft clouds and stubborn optimism ☁️</div>
   </footer>
 
 <script>
-/* ----------------- reuse previous logic + tweak wording ----------------- */
+/* ----------------- same app logic, but friendlier labels + multi-word descriptors ----------------- */
 
 /* storage */
 const STORAGE_KEY = 'pinksky_saved_location';
@@ -188,7 +217,7 @@ async function tryFetchUrls(urls) {
   return null;
 }
 
-/* little friendly AQ label (keeps it local-relevant) */
+/* friendly, local QA + text helpers */
 function airQualityLabel(pm2){
   if(pm2==null) return null;
   if(pm2 <= 12) return 'Good';
@@ -196,13 +225,14 @@ function airQualityLabel(pm2){
   return 'Poor';
 }
 
-/* convert numeric score to human-friendly confidence + descriptor */
+/* convert numeric score to human-friendly confidence + witty tagline */
 function confidenceLabel(score){
-  if (score >= 4) return {label:'High', emoji:'✨', text:'Carrot-ready — bring the camera!'};
-  if (score >= 1.5) return {label:'Medium', emoji:'🌤️', text:'Possible — thin clouds might catch color.'};
-  return {label:'Low', emoji:'☁️', text:'Unlikely — thick clouds or reduced visibility.'};
+  if (score >= 4) return {label:'High', emoji:'✨', text:'Carrot-ready — vivid color likely! Make space on your camera roll.'};
+  if (score >= 1.5) return {label:'Medium', emoji:'🌤️', text:'Possible — thin high clouds might turn into a pretty wash of color.'};
+  return {label:'Low', emoji:'☁️', text:'Unlikely — thick clouds or reduced visibility will mute the sunset.'};
 }
 
+/* main check logic */
 async function check(lat, lon, displayName) {
   const out = document.getElementById('output');
   out.style.display = 'block';
@@ -224,7 +254,7 @@ async function check(lat, lon, displayName) {
       return;
     }
 
-    // save location
+    // Save successful location
     const nameToSave = displayName || document.getElementById('manual').value.trim() || `${lat.toFixed(4)},${lon.toFixed(4)}`;
     saveLocationToStorage(nameToSave, lat, lon);
 
@@ -238,7 +268,7 @@ async function check(lat, lon, displayName) {
     const clow = json.hourly.cloudcover_low ? json.hourly.cloudcover_low[idx] : null;
     const pm2 = json.hourly.pm2_5 ? json.hourly.pm2_5[idx] : null;
 
-    // scoring
+    // scoring (unchanged)
     let score = 0;
     if (chigh !== null) {
       if (chigh >= 15 && chigh <= 85) score += 2;
@@ -264,35 +294,38 @@ async function check(lat, lon, displayName) {
       else score -= 1.2;
     }
 
-    // reason phrasing (gentle, local-friendly)
+    // produce friendly reason (multi-word, local-ish)
     let reason = null;
     if (clow !== null && clow > 50) reason = 'thick low clouds';
-    else if (cloud !== null && cloud > 90) reason = 'overcast';
-    else if (pm2 !== null && pm2 > 35) reason = 'reduced air quality (haze)';
+    else if (cloud !== null && cloud > 90) reason = 'widespread overcast';
+    else if (pm2 !== null && pm2 > 35) reason = 'reduced air quality / haze';
     else if (chigh !== null && chigh > 60 && cloud < 90) reason = 'mostly high clouds (may mute colors)';
-    else reason = 'conditions not favorable';
+    else reason = 'not quite right for afterglow';
 
-    // nice verdict + labels
-    let verdictText = '';
-    let verdictClass = 'meh';
+    // friendly verdict text (multi-word + small tagline)
+    let verdictText = '', verdictClass = 'meh', tagline = '';
     if (score >= 4) {
-      verdictText = 'Carrot-ready — vivid pink/blue afterglow likely';
+      verdictText = 'Carrot-ready — vivid pink & blue likely';
       verdictClass = 'good';
+      tagline = 'Drop everything: that one minute after sunset is for the books.';
     } else if (score >= 1.5) {
-      if ((chigh !== null && chigh >= 15 && chigh <= 85) || (cmid !== null && cmid >= 10 && cmid <= 80)) {
-        verdictText = 'Possible — thin high clouds may catch the sunset';
-      } else {
-        verdictText = 'Possible — keep an eye';
-      }
       verdictClass = 'meh';
+      if ((chigh !== null && chigh >= 15 && chigh <= 85) || (cmid !== null && cmid >= 10 && cmid <= 80)) {
+        verdictText = 'Possible — thin high clouds might catch the sun';
+        tagline = 'Pack your camera: could be pleasantly painterly.';
+      } else {
+        verdictText = 'Possible — worth checking';
+        tagline = 'Keep an eye on the western sky around sunset.';
+      }
     } else {
       verdictText = `Unlikely — ${reason}`;
       verdictClass = 'bad';
+      tagline = 'No doom: take a walk anyway. Cloud selfies count too.';
     }
 
     const conf = confidenceLabel(score);
 
-    // human-readable detail bits
+    // readable details
     const details = [];
     if (cloud !== null) details.push(`Cloud cover: ${Math.round(cloud)}%`);
     if (chigh !== null) details.push(`High clouds: ${Math.round(chigh)}%`);
@@ -302,12 +335,13 @@ async function check(lat, lon, displayName) {
 
     const best = new Date(sunsetLocal.getTime() + 10*60000);
 
-    out.innerHTML = `<div><strong class="${verdictClass}">${verdictText}</strong></div>
-      <div class="details" style="margin-top:8px"><small>Sunset: ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · Best check: ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div>
+    out.innerHTML = `
+      <div class="verdict ${verdictClass}">${verdictText}<span class="tagline"> — ${tagline}</span></div>
+      <div class="details"><small>Sunset: ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · Best check: ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small></div>
       <div class="details" style="margin-top:8px">${details.join(' · ')}</div>
-      <div class="confidence"><span class="conf-pill">${conf.emoji} Confidence: ${conf.label}</span><small title="Numeric score (hidden): ${score.toFixed(2)}" style="color:var(--muted)"> · based on cloud & air quality</small></div>`;
+      <div class="confidence"><div class="conf-pill">${conf.emoji} Confidence: ${conf.label}</div><div class="conf-extra">based on cloud layers & air quality (numeric score hidden)</div></div>
+    `;
 
-    // show tips and allow ICS
     document.getElementById('after').style.display = 'block';
     document.getElementById('tips').style.display = 'block';
     document.getElementById('notes').style.display = 'block';
@@ -327,14 +361,12 @@ async function check(lat, lon, displayName) {
   }
 }
 
-/* geocode + storage reuse */
+/* geocode + stored-name reuse (same as before) */
 async function fetchCoordsFromText(text) {
   const latlon = text.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
   if (latlon) return {lat: +latlon[1], lon: +latlon[2], name: `${+latlon[1].toFixed(4)},${+latlon[2].toFixed(4)}`};
-
   const saved = loadLocationFromStorage();
   if (saved && saved.name === text) return {lat: saved.lat, lon: saved.lon, name: saved.name};
-
   try {
     const q = encodeURIComponent(text);
     const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`;
@@ -345,7 +377,7 @@ async function fetchCoordsFromText(text) {
   return null;
 }
 
-/* events */
+/* events + wiring */
 async function onCheckClicked() {
   const v = document.getElementById('manual').value.trim();
   if (!v) return alert('Type a city or coordinates, or press "Use my location".');
@@ -369,9 +401,9 @@ async function onCheckClicked() {
     await check(coords.lat, coords.lon, coords.name);
   }
 }
-
 document.getElementById('btnCheck').addEventListener('click', onCheckClicked);
 
+/* geo button */
 document.getElementById('btnGeo').addEventListener('click', async ()=>{
   if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
   document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Locating…';
@@ -387,13 +419,13 @@ document.getElementById('btnGeo').addEventListener('click', async ()=>{
   }, {timeout:10000});
 });
 
-/* load saved name on start */
+/* prefill saved name on load */
 window.addEventListener('DOMContentLoaded', ()=>{
   const saved = loadLocationFromStorage();
   if (saved) document.getElementById('manual').value = saved.name;
 });
 
-/* ICS maker (same tiny helper) */
+/* ICS maker helper */
 function makeICS(dt) {
   function toUTCICS(d){
     const pad=(n)=>String(n).padStart(2,'0');
