@@ -5,143 +5,140 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pink Sky Checker</title>
 <style>
-  /* responsive-friendly reset */
+  /* tiny reset */
   *,*::before,*::after{box-sizing:border-box}
-  html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#071425;-webkit-font-smoothing:antialiased}
-  :root{
-    --bg-top:#eaf6ff;
-    --bg-bottom:#fff4fb;
-    --card:#ffffff;
-    --muted:#625f72;
-    --low:#ff8fbf;
-    --mid:#b08bff;
-    --high:#6e9bff;
-    --shadow-lg: 0 18px 48px rgba(8,18,40,0.10);
-    --shadow-sm: 0 8px 22px rgba(8,18,40,0.06);
-    --radius:14px;
-  }
-
+  html,body{height:100%;margin:0}
   body{
-    background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
-    padding:clamp(18px,4.5vw,40px);
-    -webkit-tap-highlight-color:transparent;
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    -webkit-font-smoothing:antialiased;
+    color:#071425;
+    background: linear-gradient(180deg,#eef7ff,#fff6fb); /* subtle sky-ish gradient */
+    padding:clamp(18px,4.5vw,36px);
     line-height:1.45;
   }
 
-  /* clouds (responsive) */
-  .clouds{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.22;filter: blur(6px) saturate(.96)}
-  .clouds svg{width:42vw;max-width:560px;min-width:220px}
-  .clouds .c1{position:absolute;left:-6vw;top:2vh;transform:scale(.98)}
-  .clouds .c2{position:absolute;right:-8vw;top:24vh;transform:scaleX(-1) rotate(4deg)}
-  .clouds .c3{position:absolute;left:4vw;bottom:-6vh;transform:scale(.86)}
+  :root{
+    --accent-a: #ff8fbf;
+    --accent-b: #b08bff;
+    --accent-c: #6e9bff;
+    --muted: #616274;
+    --card-bg: #ffffff;
+    --radius: 14px;
+    --shadow-lg: 0 18px 48px rgba(8,18,40,0.10);
+    --shadow-sm: 0 8px 22px rgba(8,18,40,0.06);
+  }
 
-  /* Title - scales via clamp; bubble feel using gradient text + layered shadow */
-  .title-wrap{max-width:1100px;margin:0 auto 1.2rem;position:relative;z-index:2}
+  /* Layout container */
+  .wrap{max-width:980px;margin:0 auto;position:relative;z-index:1}
+
+  /* Title (outside card) — bubble-ish using layered text-shadow + gradient text + soft rounded background */
+  .title-wrap{margin:0 0 clamp(14px,3.2vw,22px) 0}
   .title{
     display:inline-block;
+    padding:10px 18px;
+    border-radius:28px;
     font-weight:900;
-    font-size:clamp(24px,5.2vw,42px);
+    font-size:clamp(26px,5vw,42px);
     line-height:1;
     color:transparent;
     -webkit-background-clip:text;background-clip:text;
-    background-image: linear-gradient(90deg,var(--low),var(--mid),var(--high));
+    background-image: linear-gradient(90deg, var(--accent-a), var(--accent-b), var(--accent-c));
     text-shadow:
-      0 2px 0 rgba(255,255,255,0.8),
-      0 8px 24px rgba(107,119,255,0.09);
-    padding:6px 12px;border-radius:16px;
+      0 2px 0 rgba(255,255,255,0.85),
+      0 8px 18px rgba(107,119,255,0.07),
+      0 18px 32px rgba(107,119,255,0.06);
+    /* subtle pill behind the text for a bubble feel */
+    box-shadow: 0 10px 30px rgba(107,119,255,0.06), inset 0 1px 0 rgba(255,255,255,0.45);
+    background-color: rgba(255,255,255,0.001);
   }
 
-  /* card container - fluid width, limited max */
+  /* Card */
   .card{
     width:min(920px,96vw);
     margin:0 auto;
-    background:var(--card);
+    background:var(--card-bg);
     border-radius:var(--radius);
+    padding:clamp(12px,3.3vw,22px);
     box-shadow:var(--shadow-lg);
-    padding:clamp(14px,3.2vw,22px);
-    position:relative;
-    z-index:2;
     border:1px solid rgba(8,15,40,0.04);
   }
+  .lead{color:var(--muted);font-size:clamp(13px,2vw,15px);margin:0 0 12px}
+  label{display:block;margin:8px 0 6px;font-weight:700;color:#061425;font-size:14px}
 
-  .lead{color:var(--muted);font-size:clamp(13px,2.2vw,15px);margin-bottom:0.6rem}
-  label{display:block;margin:10px 0 6px;font-weight:700;color:#051026}
+  /* input row */
   .row{display:flex;gap:10px;align-items:center}
   .row.col{flex-direction:column;align-items:stretch}
+  input[type="text"]{flex:1;padding:11px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);font-size:15px}
+  select{padding:10px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:15px;max-width:220px}
 
-  input[type="text"]{flex:1;padding:11px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);font-size:clamp(14px,2vw,16px)}
-  select{padding:10px;border-radius:10px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:clamp(14px,2vw,16px)}
-  .btn{padding:12px 14px;border-radius:12px;border:0;color:white;font-weight:800;cursor:pointer;background:linear-gradient(90deg,var(--low),var(--mid),var(--high));box-shadow:var(--shadow-sm);min-width:88px}
+  /* big rounded gradient buttons (bubble-y) */
+  .btn{
+    padding:12px 16px;border-radius:999px;border:0;color:white;font-weight:800;cursor:pointer;
+    background: linear-gradient(90deg,var(--accent-a),var(--accent-b),var(--accent-c));
+    box-shadow: var(--shadow-sm);
+    min-width:100px;
+  }
   .btn.full{width:100%}
 
-  /* result */
+  /* result area (compact, clean) */
   .result{
-    margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(245,251,255,0.92), rgba(255,248,252,0.92));border:1px solid rgba(99,102,241,0.05);font-size:clamp(14px,2vw,15px)
+    margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(250,252,255,0.95), rgba(255,248,252,0.95));
+    border:1px solid rgba(99,102,241,0.05);font-size:15px;
   }
-
   .score-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .score-left{min-width:0}
   .score-title{font-weight:900;font-size:clamp(16px,2.4vw,22px)}
-  .verdict{font-weight:700;margin-top:6px;color:#243046}
-  .tagline{color:var(--muted);font-size:clamp(12px,1.8vw,13px);margin-top:6px}
+  .verdict{font-weight:800;margin-top:6px;color:#243046}
+  .tagline{color:var(--muted);font-size:13px;margin-top:6px}
   .score-block{text-align:right}
   .score-big{font-weight:900;font-size:clamp(22px,4vw,34px);line-height:1}
   .score-pill{display:inline-block;padding:.45rem .65rem;border-radius:999px;color:white;font-weight:800;margin-top:8px}
 
-  .details{color:var(--muted);margin-top:8px;font-size:clamp(13px,1.8vw,14px)}
+  .details{color:var(--muted);margin-top:8px;font-size:14px}
   .tiny{font-size:12px;color:var(--muted);margin-top:8px}
 
-  /* help text and tips below */
   .tips{margin-top:12px;font-size:14px;background: linear-gradient(90deg, rgba(255,244,248,0.65), rgba(237,245,255,0.65));padding:12px;border-radius:10px;border:1px solid rgba(107,119,255,0.05)}
 
-  /* responsive layout changes */
   @media (max-width:720px){
-    .row {gap:12px}
-    .row.inline {flex-direction:column}
-    .card {padding:16px}
-    .clouds{opacity:.18;filter: blur(8px)}
+    .row{flex-direction:column;align-items:stretch}
+    .btn{width:100%}
+    .title{font-size:30px}
   }
 
-  footer{max-width:1100px;margin:20px auto 60px;color:var(--muted);text-align:center;font-size:13px;position:relative;z-index:2}
+  footer{max-width:980px;margin:18px auto 60px;color:var(--muted);text-align:center;font-size:13px}
 </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="title-wrap"><div class="title">Pink Sky Checker</div></div>
 
-  <!-- decorative clouds -->
-  <div class="clouds" aria-hidden="true">
-    <svg class="c1" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="140" cy="80" rx="140" ry="44"/><ellipse cx="320" cy="70" rx="80" ry="34"/><ellipse cx="460" cy="78" rx="110" ry="40"/></g></svg>
-    <svg class="c2" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="120" cy="70" rx="120" ry="40"/><ellipse cx="260" cy="58" rx="90" ry="34"/><ellipse cx="420" cy="66" rx="110" ry="36"/></g></svg>
-    <svg class="c3" viewBox="0 0 600 150" xmlns="http://www.w3.org/2000/svg"><g fill="#fff"><ellipse cx="150" cy="70" rx="150" ry="48"/><ellipse cx="350" cy="60" rx="90" ry="36"/></g></svg>
+    <div class="card" role="main" aria-labelledby="title">
+      <div class="lead">Pick a location and day — get a short verdict plus a simple Photo-ready score (1–10).</div>
+
+      <label for="manual">Location</label>
+      <div class="row inline" style="margin-bottom:10px">
+        <button id="btnGeo" class="btn">Use my location</button>
+        <input id="manual" placeholder="Chevy Chase, MD or 38.96,-77.09" aria-label="Location input" />
+        <select id="daySelect" title="Choose day" style="max-width:220px"></select>
+      </div>
+
+      <div style="margin-top:8px">
+        <button id="btnCheck" class="btn full">Check</button>
+      </div>
+
+      <div id="output" class="result" style="display:none" role="status" aria-live="polite"></div>
+
+      <div id="after" style="display:none">
+        <div class="tips" id="tips" style="display:none"></div>
+        <div class="tiny" id="notes" style="display:none"></div>
+      </div>
+    </div>
+
+    <footer>Made with soft gradients and stubborn optimism ☁️</footer>
   </div>
-
-  <div class="title-wrap"><div class="title">Pink Sky Checker</div></div>
-
-  <div class="card" role="main" aria-labelledby="title">
-    <div class="lead">Pick a location and day. You’ll get a short verdict plus a simple Photo-ready score (1–10).</div>
-
-    <label for="manual">Location</label>
-    <div class="row inline" style="margin-bottom:10px">
-      <button id="btnGeo" class="btn">Use my location</button>
-      <input id="manual" placeholder="Chevy Chase, MD or 38.96,-77.09" aria-label="Location input" />
-      <select id="daySelect" title="Choose day" style="max-width:220px"></select>
-    </div>
-
-    <div style="margin-top:6px">
-      <button id="btnCheck" class="btn full">Check</button>
-    </div>
-
-    <div id="output" class="result" style="display:none" role="status" aria-live="polite"></div>
-
-    <div id="after" style="display:none">
-      <div class="tips" id="tips" style="display:none"></div>
-      <div class="tiny" id="notes" style="display:none"></div>
-    </div>
-  </div>
-
-  <footer>Made with soft clouds and stubborn optimism ☁️</footer>
 
 <script>
-/* ---------------- (unchanged logic, only layout updated above) ---------------- */
+/* ---------------- core logic (unchanged behavior) ---------------- */
 const STORAGE_KEY='pinksky_saved_location';
 function saveLocationToStorage(name,lat,lon){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({name,lat,lon})); }catch(e){console.warn(e)} }
 function loadLocationFromStorage(){ try{ const s=localStorage.getItem(STORAGE_KEY); if(!s) return null; const o=JSON.parse(s); if(o && typeof o.lat==='number'&&typeof o.lon==='number') return o;}catch(e){console.warn(e)} return null; }
@@ -164,8 +161,13 @@ function scoreToScale(score){
 }
 function scaleColor(n){
   const t=(n-1)/9;
-  const a=[255,143,191], b=[110,155,255];
-  const r=Math.round(a[0]+(b[0]-a[0])*t), g=Math.round(a[1]+(b[1]-a[1])*t), bl=Math.round(a[2]+(b[2]-a[2])*t);
+  const a=[255,143,191], b=[176,139,255], c=[110,155,255];
+  // Three-stop mix: map to color between pink -> purple -> blue
+  const mix1 = (t<0.5)? (t*2) : 1;
+  const mix2 = (t<0.5)? 0 : (t-0.5)*2;
+  const r=Math.round((1-mix1)*a[0]+mix1*b[0] + 0*mix2);
+  const g=Math.round((1-mix1)*a[1]+mix1*b[1] + 0*mix2);
+  const bl=Math.round((1-mix1)*a[2]+mix1*b[2] + mix2*(c[2]-b[2]));
   return `rgb(${r},${g},${bl})`;
 }
 function airQualityLabel(pm2){ if(pm2==null) return null; if(pm2<=12) return 'Good'; if(pm2<=35) return 'Moderate'; return 'Poor'; }
@@ -183,9 +185,9 @@ async function check(lat,lon,displayName){
   try{
     const urls=buildUrls(lat,lon);
     const json=await tryFetchUrls(urls);
-    if(!json){ out.innerHTML=`<div style="color:#ff6fb5;font-weight:800">Forecast unavailable for that spot.</div>`; return; }
+    if(!json){ out.innerHTML=`<div style="color:var(--accent-a);font-weight:800">Forecast unavailable for that spot.</div>`; return; }
     const dayIndex=parseInt(document.getElementById('daySelect').value||'0',10);
-    if(!json.daily || !json.daily.sunset || dayIndex>=json.daily.sunset.length){ out.innerHTML=`<div style="color:#ff6fb5;font-weight:800">No forecast for that day. Try a nearer day.</div>`; return; }
+    if(!json.daily || !json.daily.sunset || dayIndex>=json.daily.sunset.length){ out.innerHTML=`<div style="color:var(--accent-a);font-weight:800">No forecast for that day. Try a nearer day.</div>`; return; }
 
     const nameToSave = displayName || document.getElementById('manual').value.trim() || `${lat.toFixed(4)},${lon.toFixed(4)}`;
     saveLocationToStorage(nameToSave, lat, lon);
@@ -200,6 +202,7 @@ async function check(lat,lon,displayName){
     const clow = json.hourly.cloudcover_low ? json.hourly.cloudcover_low[idx] : null;
     const pm2 = json.hourly.pm2_5 ? json.hourly.pm2_5[idx] : null;
 
+    // scoring
     let score = 0;
     if (chigh !== null) { if (chigh >= 15 && chigh <= 85) score += 2; else if (chigh > 85) score -= 1; else score += 0.5; }
     if (cmid !== null) { if (cmid >= 10 && cmid <= 80) score += 1.5; else if (cmid > 80) score -= 1; }
@@ -207,6 +210,7 @@ async function check(lat,lon,displayName){
     if (cloud !== null) { if (cloud >= 10 && cloud <= 80) score += 1; else if (cloud === 0) score -= 0.8; else if (cloud > 90) score -= 1.2; }
     if (pm2 !== null) { if (pm2 <= 12) score += 1.2; else if (pm2 <= 35) score += 0.2; else score -= 1.2; }
 
+    // verdict
     let shortText=''; let reason='';
     if (score >= 4) { shortText='Great chance of vivid colors'; reason='Thin clouds at good altitudes'; }
     else if (score >= 1.5) { shortText='Possible — might catch color'; reason='Thin high/mid clouds present'; }
@@ -248,11 +252,12 @@ async function check(lat,lon,displayName){
     const blob = new Blob([ics], {type:'text/calendar'});
     const urlBlob = URL.createObjectURL(blob);
     const icsLink = document.createElement('a');
-    icsLink.href = urlBlob; icsLink.download = 'pink-sky-reminder.ics';
-    icsLink.textContent = '📅 Add reminder';
-    icsLink.style.display='inline-block'; icsLink.style.marginTop='8px'; icsLink.style.color='#243046'; document.getElementById('tips').appendChild(document.createElement('br')); document.getElementById('tips').appendChild(icsLink);
+    icsLink.href = urlBlob; icsLink.download = 'pink-sky-reminder.ics'; icsLink.textContent = '📅 Add reminder';
+    icsLink.style.display='inline-block'; icsLink.style.marginTop='8px'; icsLink.style.color='#243046';
+    document.getElementById('tips').appendChild(document.createElement('br'));
+    document.getElementById('tips').appendChild(icsLink);
 
-  }catch(err){ console.error(err); out.innerHTML=`<div style="color:#ff6fb5;font-weight:800">Error fetching forecast — check internet and try again.</div>`; }
+  }catch(err){ console.error(err); out.innerHTML=`<div style="color:var(--accent-a);font-weight:800">Error fetching forecast — check internet and try again.</div>`; }
 }
 
 async function onCheckClicked(){
@@ -263,7 +268,7 @@ async function onCheckClicked(){
   const latlon=v.match(latlonRegex);
   if(latlon) return await check(+latlon[1], +latlon[2], `${+latlon[1].toFixed(4)},${+latlon[2].toFixed(4)}`);
   else if(saved && saved.name===v) return await check(saved.lat, saved.lon, saved.name);
-  else{ document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Resolving location…'; const coords=await fetchCoordsFromText(v); if(!coords){ document.getElementById('output').innerHTML=`<div style="color:#ff6fb5;font-weight:800">Could not resolve that location. Try "Chevy Chase, MD" or coordinates.</div>`; return; } document.getElementById('manual').value=coords.name; await check(coords.lat, coords.lon, coords.name); }
+  else{ document.getElementById('output').style.display='block'; document.getElementById('output').textContent='Resolving location…'; const coords=await fetchCoordsFromText(v); if(!coords){ document.getElementById('output').innerHTML=`<div style="color:var(--accent-a);font-weight:800">Could not resolve that location. Try "Chevy Chase, MD" or coordinates.</div>`; return; } document.getElementById('manual').value=coords.name; await check(coords.lat, coords.lon, coords.name); }
 }
 document.getElementById('btnCheck').addEventListener('click', onCheckClicked);
 
