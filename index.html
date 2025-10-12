@@ -15,7 +15,6 @@
     --shadow-sm: 0 8px 22px rgba(8,18,40,0.06);
     --radius:14px;
 
-    /* layout */
     --pad: clamp(16px,4.4vw,36px);
     --content: 980px;
   }
@@ -50,35 +49,29 @@
 
   .lead{color:var(--muted);font-size:clamp(13px,2.1vw,15px);margin-bottom:8px}
   label{display:block;margin:8px 0 6px;font-weight:700;color:#051026}
+
   .row{display:flex;gap:10px;align-items:center}
   .row.col{flex-direction:column;align-items:stretch}
   input[type="text"]{flex:1;padding:11px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);font-size:clamp(14px,2vw,16px)}
   select{padding:10px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:clamp(14px,2vw,16px);min-width:170px}
-  .btn{
-    padding:12px 14px;border-radius:14px;border:0;color:white;font-weight:800;cursor:pointer;
+  .btn{padding:12px 14px;border-radius:14px;border:0;color:white;font-weight:800;cursor:pointer;
     background: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));
-    box-shadow: var(--shadow-sm);
-    min-width:88px;
-  }
+    box-shadow: var(--shadow-sm);min-width:88px}
   .btn.full{width:100%}
 
-  /* result card with floating pill on the RIGHT like your screenshot */
+  /* result card with pill on top-right */
   .result{
-    margin-top:14px;padding:14px 84px 14px 14px; /* extra right padding for pill */
+    margin-top:14px;padding:14px 84px 14px 14px;
     border-radius:12px;position:relative;
     background:linear-gradient(180deg, rgba(245,251,255,0.95), rgba(255,248,252,0.95));
-    border:1px solid rgba(99,102,241,0.05);
-    font-size:clamp(14px,2vw,15px)
+    border:1px solid rgba(99,102,241,0.05);font-size:clamp(14px,2vw,15px)
   }
   .pill{
-    position:absolute;right:18px;top:18px;
-    width:46px;height:46px;border-radius:999px;
+    position:absolute;right:18px;top:18px;width:46px;height:46px;border-radius:999px;
     display:flex;align-items:center;justify-content:center;
-    color:#fff;font-weight:900;
-    box-shadow:0 10px 22px rgba(99,102,241,0.20);
+    color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(99,102,241,0.20);
     border:2px solid rgba(255,255,255,0.2)
   }
-
   .score-title{font-weight:900;font-size:clamp(16px,2.4vw,22px)}
   .verdict{font-weight:800;margin-top:6px;color:#243046}
   .tagline{color:var(--muted);font-size:clamp(12px,1.8vw,13px);margin-top:6px}
@@ -86,11 +79,18 @@
   .details{color:var(--muted);margin-top:8px;font-size:clamp(13px,1.8vw,14px)}
   .tiny{font-size:12px;color:var(--muted);margin-top:8px}
 
-  .tips{
-    margin-top:12px;font-size:14px;
-    background: linear-gradient(90deg, rgba(255,244,248,0.65), rgba(237,245,255,0.65));
-    padding:12px;border-radius:12px;border:1px solid rgba(107,119,255,0.05)
+  /* NEW: color chips */
+  .colors{margin-top:12px}
+  .colors-title{font-weight:800;margin-bottom:6px;color:#243046}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    padding:6px 10px;border-radius:999px;color:#fff;font-weight:800;font-size:13px;
+    box-shadow:0 6px 18px rgba(99,102,241,0.12);border:2px solid rgba(255,255,255,0.22);
+    white-space:nowrap
   }
+
+  .extras{margin-top:10px}
+  .extras a{color:#243046;text-decoration:underline}
 
   @media (max-width:720px){
     .row { gap:12px; flex-direction:column; align-items:stretch }
@@ -120,7 +120,11 @@
     <div id="output" class="result" style="display:none" role="status" aria-live="polite"></div>
 
     <div id="after" style="display:none">
-      <div class="tips" id="tips" style="display:none"></div>
+      <div id="colors" class="colors" style="display:none">
+        <div class="colors-title">Predicted colors</div>
+        <div id="chips" class="chips"></div>
+      </div>
+      <div class="extras" id="extras" style="display:none"></div>
       <div class="tiny" id="notes" style="display:none"></div>
     </div>
   </div>
@@ -178,9 +182,47 @@ async function fetchCoordsFromText(text){
   return null;
 }
 
+/* make nice color chips based on conditions */
+function predictColorChips({rating, cloud, chigh, cmid, clow, pm2}){
+  const chips = [];
+  const add = (name, grad)=>{ if(!chips.find(c=>c.name===name)) chips.push({name, grad}); };
+  const haze = (pm2!=null && pm2>35);
+
+  // Very overcast / low cloud blanket
+  if ((cloud!=null && cloud>90) || (clow!=null && clow>60)) {
+    add(haze ? 'smoky gray' : 'cool gray', 'linear-gradient(90deg,#9aa6b2,#c8d0d8)');
+    add('slate blue', 'linear-gradient(90deg,#8aa0c9,#aebfe0)');
+    return chips.slice(0,3);
+  }
+
+  // Good high clouds -> pinks/purples
+  if (chigh!=null && chigh>=20 && chigh<=80){
+    add(haze ? 'dusty rose' : 'hot pink', 'linear-gradient(90deg,#ff7ab9,#ff9cd3)');
+    add(haze ? 'mauve' : 'lavender', 'linear-gradient(90deg,#c59bff,#d6b9ff)');
+  }
+
+  // Mid clouds add warm peach/orange notes
+  if (cmid!=null && cmid>=15 && cmid<=60){
+    add(haze ? 'muted peach' : 'peach', 'linear-gradient(90deg,#ffb07a,#ffd7a3)');
+  }
+
+  // Clearer skies contribute blue afterglow
+  if ((cloud!=null && cloud<=40) && (clow==null || clow<=30)) {
+    add(haze ? 'steel blue' : 'periwinkle', 'linear-gradient(90deg,#7aa9ff,#b2c8ff)');
+  }
+
+  // If very strong rating, amp the saturation
+  if (rating>=7){ add('magenta', 'linear-gradient(90deg,#ff3f9e,#ff77c8)'); }
+
+  if (chips.length===0){ add('subtle rose', 'linear-gradient(90deg,#f9a7c1,#ffd0e2)'); add('soft blue', 'linear-gradient(90deg,#9bbdff,#c7d8ff)'); }
+  return chips.slice(0,3);
+}
+
 /* main check */
 async function check(lat,lon,displayName){
-  const out=document.getElementById('output'); out.style.display='block'; out.textContent='Checking forecast…'; document.getElementById('after').style.display='none';
+  const out=document.getElementById('output'); out.style.display='block'; out.textContent='Checking forecast…';
+  document.getElementById('after').style.display='none';
+
   try{
     const urls=buildUrls(lat,lon);
     const json=await tryFetchUrls(urls);
@@ -232,23 +274,32 @@ async function check(lat,lon,displayName){
       <div class="tiny">Sunset: ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
     `;
 
-    document.getElementById('after').style.display='block';
-    document.getElementById('tips').style.display='block';
-    document.getElementById('tips').innerHTML = `<strong>Photo tip:</strong> arrive at ${best.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}. Tap focus, lower exposure a touch, use Live Photo/burst.`;
-    document.getElementById('notes').style.display='block';
-    document.getElementById('notes').textContent = 'Score is 1–10 photo-readiness (1 = unlikely, 10 = very likely).';
+    // Show predicted colors (no photo tip)
+    const chipBox = document.getElementById('chips');
+    chipBox.innerHTML = '';
+    const chips = predictColorChips({rating, cloud, chigh, cmid, clow, pm2});
+    chips.forEach(c=>{
+      const el=document.createElement('span');
+      el.className='chip';
+      el.style.background=c.grad;
+      el.textContent=c.name;
+      chipBox.appendChild(el);
+    });
+    document.getElementById('colors').style.display='block';
 
+    // Keep the calendar reminder (below chips)
     const ics = makeICS(best);
     const blob = new Blob([ics], {type:'text/calendar'});
     const urlBlob = URL.createObjectURL(blob);
-    const icsLink = document.createElement('a');
-    icsLink.href = urlBlob; icsLink.download = 'pink-sky-reminder.ics';
-    icsLink.textContent = '📅 Add reminder';
-    icsLink.style.display='inline-block'; icsLink.style.marginTop='8px'; icsLink.style.color='#243046';
-    document.getElementById('tips').appendChild(document.createElement('br'));
-    document.getElementById('tips').appendChild(icsLink);
+    const extras = document.getElementById('extras');
+    extras.innerHTML = `<a href="${urlBlob}" download="pink-sky-reminder.ics">📅 Add reminder</a>`;
+    extras.style.display='block';
 
-  }catch(err){ console.error(err); out.innerHTML=`<div style="color:var(--pink);font-weight:800">Error fetching forecast — check internet and try again.</div>`; }
+    document.getElementById('after').style.display='block';
+    document.getElementById('notes').style.display='block';
+    document.getElementById('notes').textContent = 'Score is 1–10 photo-readiness (1 = unlikely, 10 = very likely).';
+
+  }catch(err){ console.error(err); out.innerHTML=`<div style="color:var(--pink);font-weight:800)">Error fetching forecast — try again.</div>`; }
 }
 
 /* actions */
@@ -282,7 +333,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
   if(saved) document.getElementById('manual').value = saved.name;
 });
 
-/* ICS helper */
+/* ICS maker */
 function makeICS(dt){
   function toUTCICS(d){ const pad=n=>String(n).padStart(2,'0'); return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'; }
   const start=toUTCICS(dt);
