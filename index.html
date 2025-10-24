@@ -14,7 +14,6 @@
     --shadow-lg: 0 18px 40px rgba(8,18,40,0.10);
     --shadow-sm: 0 8px 22px rgba(8,18,40,0.06);
     --radius:14px;
-
     --pad: clamp(16px,4.4vw,36px);
     --content: 980px;
   }
@@ -49,14 +48,11 @@
 
   .lead{color:var(--muted);font-size:clamp(13px,2.1vw,15px);margin-bottom:8px}
   label{display:block;margin:8px 0 6px;font-weight:700;color:#051026}
-
   .row{display:flex;gap:10px;align-items:center}
   .row.col{flex-direction:column;align-items:stretch}
   input[type="text"]{flex:1;padding:11px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);font-size:clamp(14px,2vw,16px)}
   select{padding:10px;border-radius:12px;border:1px solid rgba(99,102,241,0.06);background:white;font-size:clamp(14px,2vw,16px);min-width:170px}
-  .btn{padding:12px 14px;border-radius:14px;border:0;color:white;font-weight:800;cursor:pointer;
-    background: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));
-    box-shadow: var(--shadow-sm);min-width:88px}
+  .btn{padding:12px 14px;border-radius:14px;border:0;color:white;font-weight:800;cursor:pointer;background: linear-gradient(90deg,var(--pink),var(--purple),var(--blue));box-shadow: var(--shadow-sm);min-width:88px}
   .btn.full{width:100%}
 
   /* result card with pill on top-right */
@@ -68,18 +64,16 @@
   }
   .pill{
     position:absolute;right:18px;top:18px;width:46px;height:46px;border-radius:999px;
-    display:flex;align-items:center;justify-content:center;
-    color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(99,102,241,0.20);
-    border:2px solid rgba(255,255,255,0.2)
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;
+    box-shadow:0 10px 22px rgba(99,102,241,0.20);border:2px solid rgba(255,255,255,0.2)
   }
   .score-title{font-weight:900;font-size:clamp(16px,2.4vw,22px)}
   .verdict{font-weight:800;margin-top:6px;color:#243046}
   .tagline{color:var(--muted);font-size:clamp(12px,1.8vw,13px);margin-top:6px}
-
   .details{color:var(--muted);margin-top:8px;font-size:clamp(13px,1.8vw,14px)}
   .tiny{font-size:12px;color:var(--muted);margin-top:8px}
 
-  /* NEW: color chips */
+  /* Predicted colors */
   .colors{margin-top:12px}
   .colors-title{font-weight:800;margin-bottom:6px;color:#243046}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -149,7 +143,7 @@ async function tryFetchUrls(urls){ for(const u of urls){ try{ const r=await fetc
 
 function scoreToScale(score){ const min=-2, max=6; const s=Math.max(min, Math.min(max, score)); const pct=(s-min)/(max-min); return Math.round(1 + pct*9); }
 function scaleColor(n){ const t=(n-1)/9; const a=[255,120,182], b=[110,155,255]; const r=Math.round(a[0]+(b[0]-a[0])*t), g=Math.round(a[1]+(b[1]-a[1])*t), bl=Math.round(a[2]+(b[2]-a[2])*t); return `rgb(${r},${g},${bl})`; }
-function airQualityLabel(pm2){ if(pm2==null) return null; if(pm2<=12) return 'Good'; if(pm2<=35) return 'Moderate'; return 'Poor'; }
+function airQualityLabel(pm2){ if(pm2==null) return null; if(pm2<=12) return 'Good'; if(pm2<=25) return 'Slight haze (nice)'; if(pm2<=40) return 'Moderate'; if(pm2<=60) return 'Hazy'; return 'Poor'; }
 
 /* reverse geocode (for Use my location) */
 async function reverseGeocode(lat,lon){
@@ -182,39 +176,41 @@ async function fetchCoordsFromText(text){
   return null;
 }
 
-/* make nice color chips based on conditions */
-function predictColorChips({rating, cloud, chigh, cmid, clow, pm2}){
-  const chips = [];
-  const add = (name, grad)=>{ if(!chips.find(c=>c.name===name)) chips.push({name, grad}); };
-  const haze = (pm2!=null && pm2>35);
+/* ---------- NEW: windowed sampling & gentler scoring ---------- */
+const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : null;
+const maxv = a => a.length ? Math.max(...a) : null;
 
-  // Very overcast / low cloud blanket
-  if ((cloud!=null && cloud>90) || (clow!=null && clow>60)) {
-    add(haze ? 'smoky gray' : 'cool gray', 'linear-gradient(90deg,#9aa6b2,#c8d0d8)');
-    add('slate blue', 'linear-gradient(90deg,#8aa0c9,#aebfe0)');
+function collectAtIndices(arr, idxs){ if(!arr) return []; return idxs.map(i => (typeof arr[i]==='number'? arr[i] : null)).filter(v => v!=null); }
+
+function bestCheckShiftMinutes(clowAvg){
+  if(clowAvg==null) return 10;
+  if(clowAvg > 65) return 2;   // thicker low deck -> earlier
+  if(clowAvg > 45) return 7;   // some low clouds -> a bit earlier
+  return 12;                   // clearer horizon -> later afterglow
+}
+
+/* make nice color chips based on conditions */
+function predictColorChips({rating, cloudAvg, chighMax, cmidMax, clowAvg, pm2Avg}){
+  const chips = []; const add=(n,g)=>{ if(!chips.find(c=>c.name===n)) chips.push({name:n,grad:g}); };
+  const haze = (pm2Avg!=null && pm2Avg>35);
+
+  if ((cloudAvg!=null && cloudAvg>90) || (clowAvg!=null && clowAvg>70)) {
+    add(haze?'smoky gray':'cool gray', 'linear-gradient(90deg,#9aa6b2,#c8d0d8)');
+    add('slate blue','linear-gradient(90deg,#8aa0c9,#aebfe0)');
     return chips.slice(0,3);
   }
-
-  // Good high clouds -> pinks/purples
-  if (chigh!=null && chigh>=20 && chigh<=80){
-    add(haze ? 'dusty rose' : 'hot pink', 'linear-gradient(90deg,#ff7ab9,#ff9cd3)');
-    add(haze ? 'mauve' : 'lavender', 'linear-gradient(90deg,#c59bff,#d6b9ff)');
+  if (chighMax!=null && chighMax>=20 && chighMax<=90){
+    add(haze?'dusty rose':'hot pink','linear-gradient(90deg,#ff7ab9,#ff9cd3)');
+    add(haze?'mauve':'lavender','linear-gradient(90deg,#c59bff,#d6b9ff)');
   }
-
-  // Mid clouds add warm peach/orange notes
-  if (cmid!=null && cmid>=15 && cmid<=60){
-    add(haze ? 'muted peach' : 'peach', 'linear-gradient(90deg,#ffb07a,#ffd7a3)');
+  if (cmidMax!=null && cmidMax>=15 && cmidMax<=70){
+    add(haze?'muted peach':'peach','linear-gradient(90deg,#ffb07a,#ffd7a3)');
   }
-
-  // Clearer skies contribute blue afterglow
-  if ((cloud!=null && cloud<=40) && (clow==null || clow<=30)) {
-    add(haze ? 'steel blue' : 'periwinkle', 'linear-gradient(90deg,#7aa9ff,#b2c8ff)');
+  if ((cloudAvg!=null && cloudAvg<=55) && (clowAvg==null || clowAvg<=55)) {
+    add(haze?'steel blue':'periwinkle','linear-gradient(90deg,#7aa9ff,#b2c8ff)');
   }
-
-  // If very strong rating, amp the saturation
-  if (rating>=7){ add('magenta', 'linear-gradient(90deg,#ff3f9e,#ff77c8)'); }
-
-  if (chips.length===0){ add('subtle rose', 'linear-gradient(90deg,#f9a7c1,#ffd0e2)'); add('soft blue', 'linear-gradient(90deg,#9bbdff,#c7d8ff)'); }
+  if (rating>=7){ add('magenta','linear-gradient(90deg,#ff3f9e,#ff77c8)'); }
+  if (chips.length===0){ add('subtle rose','linear-gradient(90deg,#f9a7c1,#ffd0e2)'); add('soft blue','linear-gradient(90deg,#9bbdff,#c7d8ff)'); }
   return chips.slice(0,3);
 }
 
@@ -235,35 +231,77 @@ async function check(lat,lon,displayName){
 
     const sunsetLocal = new Date(json.daily.sunset[dayIndex]);
     const times = json.hourly.time;
-    const idx = nearestIndex(times, sunsetLocal);
+    const idx0 = nearestIndex(times, sunsetLocal);
+    const idxM = nearestIndex(times, new Date(sunsetLocal.getTime()-60*60000));
+    const idxP = nearestIndex(times, new Date(sunsetLocal.getTime()+60*60000));
+    const idxs = [idxM, idx0, idxP];
 
-    const cloud = json.hourly.cloudcover ? json.hourly.cloudcover[idx] : null;
-    const chigh = json.hourly.cloudcover_high ? json.hourly.cloudcover_high[idx] : null;
-    const cmid = json.hourly.cloudcover_mid ? json.hourly.cloudcover_mid[idx] : null;
-    const clow = json.hourly.cloudcover_low ? json.hourly.cloudcover_low[idx] : null;
-    const pm2 = json.hourly.pm2_5 ? json.hourly.pm2_5[idx] : null;
+    const clouds = collectAtIndices(json.hourly.cloudcover, idxs);
+    const highs  = collectAtIndices(json.hourly.cloudcover_high, idxs);
+    const mids   = collectAtIndices(json.hourly.cloudcover_mid, idxs);
+    const lows   = collectAtIndices(json.hourly.cloudcover_low, idxs);
+    const pm2s   = collectAtIndices(json.hourly.pm2_5, idxs);
 
+    const cloudAvg = avg(clouds);
+    const chighMax = maxv(highs);
+    const cmidMax  = maxv(mids);
+    const clowAvg  = avg(lows);
+    const pm2Avg   = avg(pm2s);
+
+    /* scoring */
     let score = 0;
-    if (chigh !== null) { if (chigh >= 15 && chigh <= 85) score += 2; else if (chigh > 85) score -= 1; else score += 0.5; }
-    if (cmid !== null) { if (cmid >= 10 && cmid <= 80) score += 1.5; else if (cmid > 80) score -= 1; }
-    if (clow !== null) { if (clow <= 30) score += 1; else score -= 1.5; }
-    if (cloud !== null) { if (cloud >= 10 && cloud <= 80) score += 1; else if (cloud === 0) score -= 0.8; else if (cloud > 90) score -= 1.2; }
-    if (pm2 !== null) { if (pm2 <= 12) score += 1.2; else if (pm2 <= 35) score += 0.2; else score -= 1.2; }
 
+    // total cloud: broken clouds = good
+    if (cloudAvg!=null){
+      if (cloudAvg >= 35 && cloudAvg <= 80) score += 2.0;
+      else if ((cloudAvg >= 20 && cloudAvg < 35) || (cloudAvg > 80 && cloudAvg <= 90)) score += 0.8;
+      else if (cloudAvg < 10) score -= 0.4;
+      else if (cloudAvg > 90) score -= 1.0;
+    }
+
+    // high & mid clouds: stronger boost
+    if (chighMax!=null){
+      if (chighMax >= 20 && chighMax <= 90) score += 1.8;
+      else if (chighMax > 90) score -= 0.4;
+    }
+    if (cmidMax!=null){
+      if (cmidMax >= 15 && cmidMax <= 80) score += 1.4;
+      else if (cmidMax > 85) score -= 0.3;
+    }
+
+    // low clouds: softer penalty; broken low deck is fine
+    if (clowAvg!=null){
+      if (clowAvg <= 35) score += 0.8;
+      else if (clowAvg <= 60) score += 0.2;
+      else score -= 0.8;
+    }
+
+    // PM2.5: slight haze helps, heavy hurts
+    if (pm2Avg!=null){
+      if (pm2Avg <= 8) score += 0.3;
+      else if (pm2Avg <= 25) score += 0.6;
+      else if (pm2Avg <= 40) score += 0.1;
+      else if (pm2Avg <= 60) score -= 0.6;
+      else score -= 1.2;
+    }
+
+    // verdict
     let shortText='', reason='';
-    if (score >= 4) { shortText='Great chance of vivid colors'; reason='Thin clouds at good altitudes'; }
-    else if (score >= 1.5) { shortText='Possible — might catch color'; reason='Thin high/mid clouds present'; }
-    else { shortText='Unlikely to be vivid'; reason = (clow!==null && clow>50)?'Thick low clouds': (cloud!==null && cloud>90)?'Widespread overcast': (pm2!==null && pm2>35)?'Reduced visibility/haze':'Not favorable clouds'; }
+    if (score >= 4.5) { shortText='Great chance of vivid colors'; reason='Broken mid/high clouds line up'; }
+    else if (score >= 2.3) { shortText='Possible — might pop'; reason='Some high/mid clouds around'; }
+    else { shortText='Unlikely to be vivid'; reason = (clowAvg!=null && clowAvg>60)?'Thick low clouds': (cloudAvg!=null && cloudAvg>90)?'Widespread overcast': (pm2Avg!=null && pm2Avg>40)?'Reduced visibility/haze':'Not favorable clouds'; }
 
-    const best = new Date(sunsetLocal.getTime() + 10*60000);
+    const bestShift = bestCheckShiftMinutes(clowAvg);
+    const best = new Date(sunsetLocal.getTime() + bestShift*60000);
     const rating = scoreToScale(score);
     const pillColor = scaleColor(rating);
+
     const details = [];
-    if (cloud !== null) details.push(`Cloud ${Math.round(cloud)}%`);
-    if (chigh !== null) details.push(`High ${Math.round(chigh)}%`);
-    if (cmid !== null) details.push(`Mid ${Math.round(cmid)}%`);
-    if (clow !== null) details.push(`Low ${Math.round(clow)}%`);
-    if (pm2 !== null) details.push(`AQ: ${airQualityLabel(pm2)}`);
+    if (cloudAvg!=null) details.push(`Cloud ${Math.round(cloudAvg)}%`);
+    if (chighMax!=null) details.push(`High ${Math.round(chighMax)}%`);
+    if (cmidMax!=null)  details.push(`Mid ${Math.round(cmidMax)}%`);
+    if (clowAvg!=null)  details.push(`Low ${Math.round(clowAvg)}%`);
+    if (pm2Avg!=null)   details.push(`AQ: ${airQualityLabel(pm2Avg)}`);
 
     out.innerHTML = `
       <div class="pill" style="background:${pillColor}">${rating}</div>
@@ -274,20 +312,14 @@ async function check(lat,lon,displayName){
       <div class="tiny">Sunset: ${sunsetLocal.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
     `;
 
-    // Show predicted colors (no photo tip)
+    // Predicted colors
     const chipBox = document.getElementById('chips');
     chipBox.innerHTML = '';
-    const chips = predictColorChips({rating, cloud, chigh, cmid, clow, pm2});
-    chips.forEach(c=>{
-      const el=document.createElement('span');
-      el.className='chip';
-      el.style.background=c.grad;
-      el.textContent=c.name;
-      chipBox.appendChild(el);
-    });
+    const chips = predictColorChips({rating, cloudAvg, chighMax, cmidMax, clowAvg, pm2Avg});
+    chips.forEach(c=>{ const el=document.createElement('span'); el.className='chip'; el.style.background=c.grad; el.textContent=c.name; chipBox.appendChild(el); });
     document.getElementById('colors').style.display='block';
 
-    // Keep the calendar reminder (below chips)
+    // Calendar reminder
     const ics = makeICS(best);
     const blob = new Blob([ics], {type:'text/calendar'});
     const urlBlob = URL.createObjectURL(blob);
@@ -335,7 +367,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
 /* ICS maker */
 function makeICS(dt){
-  function toUTCICS(d){ const pad=n=>String(n).padStart(2,'0'); return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'; }
+  function toUTCICS(d){ const pad=n=>String(n).padStart(2,'0'); return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z'; }
   const start=toUTCICS(dt);
   const end=toUTCICS(new Date(dt.getTime()+20*60000));
   const uid='pink-sky-'+Date.now()+'@local';
